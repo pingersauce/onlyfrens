@@ -1,0 +1,197 @@
+body {
+    font-family: 'Arial', sans-serif; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #1a1a2e;
+    background-image: radial-gradient(circle at center, #2a0845 0%, #000000 100%);
+    color: #e0e0e0; 
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    perspective: 1000px; 
+}
+
+.container {
+    background-color: rgba(30, 30, 50, 0.8); 
+    padding: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(70, 70, 100, 0.5);
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.2), 0 0 30px rgba(0, 191, 255, 0.1); 
+    text-align: center;
+    max-width: 800px;
+    width: 100%;
+    transform-style: preserve-3d; 
+    transition: transform 0.5s ease-in-out;
+}
+
+.container:hover {
+    transform: rotateY(2deg) rotateX(1deg);
+}
+
+h1 {
+    font-size: 2.8em; 
+    color: #00ffff; 
+    text-shadow: 0 0 8px #00ffff, 0 0 12px #00ffff; 
+    margin-bottom: 30px; 
+    font-weight: bold;
+    letter-spacing: 1.5px; 
+}
+
+p {
+    color: #cccccc; 
+    line-height: 1.6;
+}
+
+.input-group {
+    margin-bottom: 25px; 
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 10px; 
+    font-weight: bold;
+    color: #00bfff; 
+    text-transform: uppercase; 
+    font-size: 0.9em;
+}
+
+.input-button-row {
+    display: flex;
+    gap: 15px; 
+    align-items: center; 
+}
+
+.input-button-row input[type="text"] {
+    flex-grow: 1;
+    padding: 12px 15px; 
+    border: 1px solid #00bfff; 
+    border-radius: 5px;
+    background-color: #2a2a4a; 
+    color: #e0e0e0; 
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-button-row input[type="text"]::placeholder {
+    color: #888; 
+}
+
+.input-button-row input[type="text"]:focus {
+    outline: none;
+    border-color: #00ffff; 
+    box-shadow: 0 0 8px rgba(0, 191, 255, 0.5); 
+    background-color: #3a3a5a; 
+}
+
+.input-button-row button {
+    padding: 12px 25px; 
+    background-color: #00bfff; 
+    color: #1a1a2e; 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease;
+}
+
+.input-button-row button:hover {
+    background-color: #00ffff; 
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.8); 
+}
+
+.input-button-row button:active {
+    transform: scale(0.98); 
+}
+
+.eligibility-info {
+    font-size: 1em; 
+    color: #00bfff; 
+    margin-top: 20px; 
+    margin-bottom: 40px; 
+    font-style: italic;
+}
+
+.image-gallery {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; 
+    padding-bottom: 10px;
+    overflow-x: visible;
+}
+
+.image-gallery img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    max-width: 600px; 
+    flex-shrink: 1;
+    border-radius: 8px;
+    border: 1px solid rgba(70, 70, 100, 0.3);
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.1); 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-gallery img:hover {
+    transform: scale(1.03) rotateZ(1deg); 
+    box-shadow: 0 0 25px rgba(0, 191, 255, 0.4); 
+}
+
+.powered-by {
+    margin-top: 40px; 
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; 
+}
+
+.powered-by p {
+    font-size: 0.9em; 
+    color: #888; 
+    margin: 0;
+}
+
+.powered-by img {
+    width: 50px; 
+    height: auto;
+    object-fit: contain;
+    border-radius: 5px;
+    opacity: 0.7; 
+    transition: opacity 0.3s ease, box-shadow 0.3s ease;
+}
+
+.powered-by img:hover {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.8); 
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .input-button-row {
+        flex-direction: column; 
+        gap: 10px;
+    }
+
+    .input-button-row input[type="text"],
+    .input-button-row button {
+        width: 100%; 
+        box-sizing: border-box; 
+    }
+
+    .input-button-row button {
+        padding: 10px 20px; 
+    }
+}
