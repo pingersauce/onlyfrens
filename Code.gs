@@ -1,7 +1,12 @@
 // Google Apps Script for handling referrals
 const SPREADSHEET_ID = '1XhsSeeMdgw8Flk8KxDEDmziMnKLHPy9756y8fbeRmKc';
 const SHEET_NAME = 'OnlyFrens Referrals';
-const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'https://*.vercel.app'];
+const ALLOWED_ORIGINS = [
+    'https://frensfr.vercel.app',
+    'https://*.vercel.app',
+    'http://localhost:3000',  // For local development
+    'http://localhost:5173'   // For Vite development server
+];
 
 // Simple logging function
 function logToSheet(message) {
@@ -20,70 +25,40 @@ function logToSheet(message) {
 
 // Create JSON response with CORS headers
 function createJsonResponse(data, origin = null) {
+  logToSheet('Creating JSON response for origin: ' + origin);
+  logToSheet('Response data: ' + JSON.stringify(data));
+  
   const response = ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
     
-  if (origin) {
-    // Check if origin is allowed
-    const isAllowed = ALLOWED_ORIGINS.some(allowed => {
-      if (allowed.includes('*')) {
-        const pattern = new RegExp('^' + allowed.replace('*', '.*') + '$');
-        return pattern.test(origin);
-      }
-      return allowed === origin;
-    });
-    
-    if (isAllowed) {
-      response.setHeader('Access-Control-Allow-Origin', origin);
-      response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
-    }
-  }
-  
-  return response;
-}
-
-// Handle OPTIONS request for CORS
-function doOptions(e) {
-  const origin = e.parameter.origin;
-  const response = ContentService.createTextOutput('');
-  
-  if (origin) {
-    // Check if origin is allowed
-    const isAllowed = ALLOWED_ORIGINS.some(allowed => {
-      if (allowed.includes('*')) {
-        const pattern = new RegExp('^' + allowed.replace('*', '.*') + '$');
-        return pattern.test(origin);
-      }
-      return allowed === origin;
-    });
-    
-    if (isAllowed) {
-      response.setHeader('Access-Control-Allow-Origin', origin);
-      response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
-      response.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight for 24 hours
-    }
-  }
+  // Always set CORS headers
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   return response;
 }
 
 // Main GET handler
 function doGet(e) {
-  logToSheet('GET request: ' + JSON.stringify(e.parameters));
+  logToSheet('GET request received');
+  logToSheet('Parameters: ' + JSON.stringify(e.parameters));
   
   try {
     const action = e.parameter.action;
     const wallet = e.parameter.wallet;
     const origin = e.parameter.origin;
     
+    logToSheet('Action: ' + action);
+    logToSheet('Wallet: ' + wallet);
+    logToSheet('Origin: ' + origin);
+    
     if (!action) {
-      return createJsonResponse({ error: 'Missing action parameter' }, origin);
+      return createJsonResponse({ error: 'Missing action parameter' });
     }
     
     if (!wallet && (action === 'check' || action === 'stats')) {
-      return createJsonResponse({ error: 'Missing wallet parameter' }, origin);
+      return createJsonResponse({ error: 'Missing wallet parameter' });
     }
     
     const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
@@ -97,10 +72,10 @@ function doGet(e) {
             exists: true,
             referralCode: data[i][1],
             bonusPercentage: data[i][4] || 0
-          }, origin);
+          });
         }
       }
-      return createJsonResponse({ exists: false }, origin);
+      return createJsonResponse({ exists: false });
     }
     
     if (action === 'stats') {
@@ -121,33 +96,41 @@ function doGet(e) {
             referralCode: referralCode,
             bonusPercentage: data[i][4] || 0,
             referralCount: referralCount
-          }, origin);
+          });
         }
       }
-      return createJsonResponse({ error: 'Wallet not found' }, origin);
+      return createJsonResponse({ error: 'Wallet not found' });
     }
     
-    return createJsonResponse({ error: 'Invalid action' }, origin);
+    return createJsonResponse({ error: 'Invalid action' });
   } catch (error) {
     logToSheet('Error in doGet: ' + error.toString());
-    return createJsonResponse({ error: error.toString() }, e.parameter.origin);
+    return createJsonResponse({ error: error.toString() });
   }
 }
 
 // Main POST handler
 function doPost(e) {
-  logToSheet('POST request: ' + e.postData.contents);
+  logToSheet('POST request received');
+  logToSheet('Parameters: ' + JSON.stringify(e.parameters));
   
   try {
     if (!e.postData || !e.postData.contents) {
-      return createJsonResponse({ error: 'No data received' }, e.parameter.origin);
+      logToSheet('No post data received');
+      return createJsonResponse({ error: 'No data received' });
     }
     
-    const data = JSON.parse(e.postData.contents);
-    const origin = data.origin;
+    logToSheet('Post data: ' + e.postData.contents);
     
-    if (!data.action || data.action !== 'submit' || !data.walletAddress) {
-      return createJsonResponse({ error: 'Invalid request data' }, origin);
+    const data = JSON.parse(e.postData.contents);
+    const action = e.parameter.action;
+    
+    logToSheet('Action: ' + action);
+    logToSheet('Wallet address: ' + data.walletAddress);
+    
+    if (action !== 'submit' || !data.walletAddress) {
+      logToSheet('Invalid request data');
+      return createJsonResponse({ error: 'Invalid request data' });
     }
     
     const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
@@ -155,6 +138,9 @@ function doPost(e) {
     const walletAddress = data.walletAddress;
     const referredBy = data.referredBy || '';
     const timestamp = new Date().toISOString();
+    
+    logToSheet('Processing wallet: ' + walletAddress);
+    logToSheet('Referred by: ' + referredBy);
     
     // Check if wallet exists
     let referralCode = '';
@@ -164,6 +150,7 @@ function doPost(e) {
       if (existingData[i][0] === walletAddress) {
         referralCode = existingData[i][1];
         rowIndex = i + 1;
+        logToSheet('Found existing wallet with referral code: ' + referralCode);
         break;
       }
     }
@@ -172,9 +159,11 @@ function doPost(e) {
     if (!referralCode) {
       referralCode = walletAddress.substring(0, 6).toUpperCase();
       sheet.appendRow([walletAddress, referralCode, referredBy, timestamp, 0]);
+      logToSheet('Added new wallet with referral code: ' + referralCode);
     } else {
       // Update timestamp for existing wallet
       sheet.getRange(rowIndex, 4).setValue(timestamp);
+      logToSheet('Updated timestamp for existing wallet');
     }
     
     // If referred, update referrer's bonus
@@ -189,6 +178,7 @@ function doPost(e) {
           }
           const bonusPercentage = Math.min(referralCount * 10, 100);
           sheet.getRange(i + 1, 5).setValue(bonusPercentage);
+          logToSheet('Updated referrer bonus to: ' + bonusPercentage + '%');
           break;
         }
       }
@@ -202,15 +192,18 @@ function doPost(e) {
       }
     }
     
-    return createJsonResponse({
+    const response = {
       success: true,
       referralCode: referralCode,
       bonusPercentage: Math.min(referralCount * 10, 100),
       referralCount: referralCount
-    }, origin);
+    };
+    
+    logToSheet('Sending response: ' + JSON.stringify(response));
+    return createJsonResponse(response);
     
   } catch (error) {
     logToSheet('Error in doPost: ' + error.toString());
-    return createJsonResponse({ error: error.toString() }, e.parameter.origin);
+    return createJsonResponse({ error: error.toString() });
   }
 } 

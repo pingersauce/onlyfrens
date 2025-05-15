@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Submitting...';
                     
                     // Google Apps Script deployment URL
-                    const API_URL = 'https://script.google.com/macros/s/AKfycbwdjZMUVoQ86XpHtpA7KNHxmJdT5ZUZXgouzPuqB6KGXF36BnDCAeJk3ZWfSezKrLwQ/exec';
+                    const API_URL = 'https://script.google.com/macros/s/AKfycbxW5TAZ2lbzIyEy8Jru-B8wLOz38LUCvf1Sd1JGxXjp1-2oVZfPOQRrXk3PTt9KCayj/exec';
                     
                     console.log('Submitting wallet:', walletAddress);
                     console.log('Request origin:', window.location.origin);
@@ -163,62 +163,82 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log('Starting fetch request...');
                         console.log('Request URL:', API_URL);
                         
-                        // Simplified fetch request with retry
-                        const makeRequest = async (retryCount = 0) => {
-                            try {
-                                const response = await fetch(API_URL + '?action=submit&origin=' + encodeURIComponent(window.location.origin), {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        walletAddress: walletAddress,
-                                        referredBy: urlReferralCode || '',
-                                        timestamp: new Date().toISOString()
-                                    })
-                                });
-
-                                console.log('Response status:', response.status);
-                                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-                                
-                                const text = await response.text();
-                                console.log('Raw response:', text);
-                                
-                                if (!text) {
-                                    throw new Error('Empty response received');
-                                }
-                                
-                                return JSON.parse(text);
-                            } catch (error) {
-                                console.log(`Request attempt ${retryCount + 1} failed:`, error);
-                                if (retryCount < 2) { // Try up to 3 times
-                                    console.log('Retrying request...');
-                                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
-                                    return makeRequest(retryCount + 1);
-                                }
-                                throw error;
-                            }
-                        };
-
-                        const data = await makeRequest();
-                        console.log('Parsed response:', data);
-
-                        if (data.error) {
-                            throw new Error(data.error);
-                        }
-
-                        console.log('Wallet submitted successfully');
-                        showFeedback('Wallet address submitted successfully!');
-                        walletInput.value = '';
+                        // Create URL with parameters
+                        const url = new URL(API_URL);
+                        url.searchParams.append('action', 'submit');
+                        url.searchParams.append('origin', window.location.origin);
+                        console.log('Full URL with params:', url.toString());
                         
-                        // Show referral popup with user's data
-                        const userReferralCode = data.referralCode || walletAddress.substring(0, 6).toUpperCase();
-                        const bonusPercentage = data.bonusPercentage || 0;
-                        const referralCount = data.referralCount || 0;
-                        showReferralPopup(userReferralCode, bonusPercentage, referralCount);
+                        // Make the request with a timeout
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                        
+                        try {
+                            const response = await fetch(url.toString(), {
+                                method: 'POST',
+                                signal: controller.signal,
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    walletAddress: walletAddress,
+                                    referredBy: urlReferralCode || '',
+                                    timestamp: new Date().toISOString()
+                                })
+                            });
+                            
+                            clearTimeout(timeoutId);
+                            
+                            console.log('Response status:', response.status);
+                            console.log('Response status text:', response.statusText);
+                            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                            
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            
+                            const text = await response.text();
+                            console.log('Raw response:', text);
+                            
+                            if (!text) {
+                                throw new Error('Empty response received');
+                            }
+                            
+                            const data = JSON.parse(text);
+                            console.log('Parsed response:', data);
+
+                            if (data.error) {
+                                throw new Error(data.error);
+                            }
+
+                            console.log('Wallet submitted successfully');
+                            showFeedback('Wallet address submitted successfully!');
+                            walletInput.value = '';
+                            
+                            // Show referral popup with user's data
+                            const userReferralCode = data.referralCode || walletAddress.substring(0, 6).toUpperCase();
+                            const bonusPercentage = data.bonusPercentage || 0;
+                            const referralCount = data.referralCount || 0;
+                            showReferralPopup(userReferralCode, bonusPercentage, referralCount);
+                            
+                        } catch (fetchError) {
+                            console.error('Fetch error:', {
+                                name: fetchError.name,
+                                message: fetchError.message,
+                                stack: fetchError.stack,
+                                type: fetchError.type,
+                                cause: fetchError.cause
+                            });
+                            
+                            if (fetchError.name === 'AbortError') {
+                                throw new Error('Request timed out after 10 seconds');
+                            }
+                            
+                            throw fetchError;
+                        }
                         
                     } catch (error) {
-                        console.error('Fetch error details:', {
+                        console.error('Error in wallet submission:', {
                             name: error.name,
                             message: error.message,
                             stack: error.stack
@@ -227,7 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         // More user-friendly error message
                         let errorMessage = 'Error submitting wallet address. ';
                         if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-                            errorMessage += 'The server is not responding. Please try again in a few moments.';
+                            errorMessage += 'Unable to connect to the server. Please check your internet connection and try again.';
+                        } else if (error.message.includes('timed out')) {
+                            errorMessage += 'The request took too long to complete. Please try again.';
                         } else {
                             errorMessage += error.message;
                         }
