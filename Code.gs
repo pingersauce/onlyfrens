@@ -1,7 +1,7 @@
 // Google Apps Script for handling referrals
 const SPREADSHEET_ID = '1XhsSeeMdgw8Flk8KxDEDmziMnKLHPy9756y8fbeRmKc';
 const SHEET_NAME = 'OnlyFrens Referrals';
-const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'http://localhost:3000'];
+const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'http://localhost:3000', 'https://*.vercel.app'];
 
 // Add logging function with more details and better error handling
 function logToSheet(message, type = 'INFO') {
@@ -78,11 +78,20 @@ function createJsonResponse(data, origin) {
     const response = ContentService.createTextOutput(JSON.stringify(data))
       .setMimeType(ContentService.MimeType.JSON);
     
-    // Add CORS headers if origin is allowed
-    if (ALLOWED_ORIGINS.includes(origin)) {
+    // Check if origin is allowed
+    const isAllowedOrigin = ALLOWED_ORIGINS.some(allowedOrigin => {
+      if (allowedOrigin.includes('*')) {
+        // Handle wildcard domains
+        const pattern = allowedOrigin.replace('*', '.*');
+        return new RegExp(pattern).test(origin);
+      }
+      return allowedOrigin === origin;
+    });
+    
+    if (isAllowedOrigin) {
       response.setHeader('Access-Control-Allow-Origin', origin);
       response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
     }
     
     return response;
@@ -229,8 +238,30 @@ function doPost(e) {
 
 // Handle OPTIONS request for CORS
 function doOptions(e) {
-  const origin = e.parameter.origin || e.postData?.contents ? JSON.parse(e.postData.contents).origin : '';
-  return createJsonResponse({}, origin);
+  const origin = e.parameter.origin || (e.postData?.contents ? JSON.parse(e.postData.contents).origin : '');
+  
+  // Create response with CORS headers
+  const response = ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+  
+  // Check if origin is allowed
+  const isAllowedOrigin = ALLOWED_ORIGINS.some(allowedOrigin => {
+    if (allowedOrigin.includes('*')) {
+      // Handle wildcard domains
+      const pattern = allowedOrigin.replace('*', '.*');
+      return new RegExp(pattern).test(origin);
+    }
+    return allowedOrigin === origin;
+  });
+  
+  if (isAllowedOrigin) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    response.setHeader('Access-Control-Max-Age', '3600');
+  }
+  
+  return response;
 }
 
 // Handler functions
