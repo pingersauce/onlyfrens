@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Test API URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyW4Q9R7bmrIGWA4oxv8cV9KvVNxx5vReN0Syk-fjELgP8h82-NhkUTz9LrHczP8saw/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwruL1ef15vNIwZlp89eVDJDf7AX_V80xZWt6u4mC2n3xiyA57nq0dXsTeNUzh2W2Dd/exec';
 
     if (submitButton && walletInput) {
         submitButton.addEventListener('click', async () => {
@@ -31,40 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     // Visual feedback
                     submitButton.disabled = true;
-                    submitButton.textContent = 'Testing...';
+                    submitButton.textContent = 'Submitting...';
                     
-                    console.log('Testing connection to:', API_URL);
+                    console.log('Submitting wallet:', walletAddress);
                     console.log('Current origin:', window.location.origin);
                     
-                    // First try a simple GET request
-                    console.log('Testing GET request...');
-                    try {
-                        const getResponse = await fetch(API_URL);
-                        console.log('GET Response status:', getResponse.status);
-                        const getData = await getResponse.json();
-                        console.log('GET Response data:', getData);
-                    } catch (getError) {
-                        console.error('GET request failed:', getError);
-                    }
-                    
-                    // Then try the POST request
-                    console.log('Testing POST request...');
+                    // Make the request
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Origin': window.location.origin
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            test: true,
                             walletAddress: walletAddress,
                             origin: window.location.origin
                         })
                     });
                     
-                    console.log('POST Response status:', response.status);
-                    console.log('POST Response headers:', Object.fromEntries(response.headers.entries()));
-                    
+                    console.log('Response status:', response.status);
                     const text = await response.text();
                     console.log('Raw response:', text);
                     
@@ -78,18 +62,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     if (data.status === 'success') {
-                        showFeedback('Connection test successful!');
+                        showFeedback('Wallet submitted successfully!');
                     } else {
-                        showFeedback('Test failed: ' + (data.message || 'Unknown error'), true);
+                        showFeedback('Submission failed: ' + (data.message || 'Unknown error'), true);
                     }
                     
                 } catch (error) {
-                    console.error('Test error:', {
+                    console.error('Submission error:', {
                         name: error.name,
                         message: error.message,
                         stack: error.stack
                     });
-                    showFeedback('Error testing connection: ' + error.message, true);
+                    showFeedback('Error submitting wallet: ' + error.message, true);
                 } finally {
                     submitButton.disabled = false;
                     submitButton.textContent = 'Submit';
