@@ -153,63 +153,75 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Submitting...';
                     
                     // Google Apps Script deployment URL
-                    const API_URL = 'https://script.google.com/macros/s/AKfycbzNVE6XNaMeNxQxK_w_Fwiyd_HNYlnMrQOAt5GaxzhQZ1PX1hLbHvE9qbvdwxHVKiFM/exec';
+                    const API_URL = 'https://script.google.com/macros/s/AKfycbxVbEKqIbxnaca9zq598UIiNPgUIJsOQgin7tTCYTN4IsmM9U_NjVVJCy5gZCRvByyR/exec';
                     
                     console.log('Submitting wallet:', walletAddress);
+                    console.log('Request origin:', window.location.origin);
                     
                     // Single API call to submit wallet
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            walletAddress: walletAddress,
-                            referredBy: urlReferralCode || '',
-                            timestamp: new Date().toISOString(),
-                            action: 'submit',
-                            origin: window.location.origin
-                        })
-                    });
-
-                    // Log the raw response for debugging
-                    console.log('Raw response:', response);
-                    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-                    
-                    // Try to parse the response
-                    let data;
                     try {
-                        const text = await response.text();
-                        console.log('Response text:', text);
-                        data = JSON.parse(text);
+                        console.log('Starting fetch request...');
+                        const response = await fetch(API_URL, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'Origin': window.location.origin
+                            },
+                            body: JSON.stringify({
+                                walletAddress: walletAddress,
+                                referredBy: urlReferralCode || '',
+                                timestamp: new Date().toISOString(),
+                                action: 'submit',
+                                origin: window.location.origin
+                            })
+                        });
+
+                        console.log('Fetch completed. Status:', response.status);
+                        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                        
+                        // Try to parse the response
+                        let data;
+                        try {
+                            const text = await response.text();
+                            console.log('Raw response text:', text);
+                            data = JSON.parse(text);
+                        } catch (error) {
+                            console.error('Error parsing response:', error);
+                            throw new Error('Invalid response from server: ' + error.message);
+                        }
+
+                        console.log('Parsed response:', data);
+
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+
+                        console.log('Wallet submitted successfully');
+                        showFeedback('Wallet address submitted successfully!');
+                        walletInput.value = '';
+                        
+                        // Show referral popup with user's data
+                        const userReferralCode = data.referralCode || walletAddress.substring(0, 6).toUpperCase();
+                        const bonusPercentage = data.bonusPercentage || 0;
+                        const referralCount = data.referralCount || 0;
+                        showReferralPopup(userReferralCode, bonusPercentage, referralCount);
+                        
                     } catch (error) {
-                        console.error('Error parsing response:', error);
-                        throw new Error('Invalid response from server');
+                        console.error('Fetch error details:', {
+                            name: error.name,
+                            message: error.message,
+                            stack: error.stack
+                        });
+                        showFeedback('Error submitting wallet address: ' + error.message, true);
+                    } finally {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Submit';
                     }
-
-                    console.log('Parsed response:', data);
-
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-
-                    console.log('Wallet submitted successfully');
-                    showFeedback('Wallet address submitted successfully!');
-                    walletInput.value = '';
-                    
-                    // Show referral popup with user's data
-                    const userReferralCode = data.referralCode || walletAddress.substring(0, 6).toUpperCase();
-                    const bonusPercentage = data.bonusPercentage || 0;
-                    const referralCount = data.referralCount || 0;
-                    showReferralPopup(userReferralCode, bonusPercentage, referralCount);
-                    
                 } catch (error) {
                     console.error('Error in wallet submission process:', error);
                     showFeedback(error.message || 'Error submitting wallet address. Please try again.', true);
-                } finally {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Submit';
                 }
             } else {
                 showFeedback('Please enter a valid Solana wallet address (44 characters).', true);
