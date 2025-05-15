@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Checking wallet:', walletAddress);
                     
                     // First, check if this wallet already exists
-                    const checkResponse = await fetch('https://script.google.com/macros/s/AKfycbyRRJBUf6iZM3pWoWBYfthc9GRw5BmeRmTSc53BZd7cPLucJ_BiGZ1Lp0Q_ne6pWNMM/exec?action=check&wallet=' + encodeURIComponent(walletAddress), {
+                    const checkResponse = await fetch('https://script.google.com/macros/s/AKfycby9ZQLnvLCBVligM-aR6TvjoTQjkJP3lbTqmPo2tI9hVqZKW3W65JEd8DfWGtV2ittI/exec?action=check&wallet=' + encodeURIComponent(walletAddress), {
                         method: 'GET',
                         mode: 'no-cors',
                         headers: {
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Submitting wallet to Google Sheets...');
                     
                     // Send to Google Sheets
-                    const response = await fetch('https://script.google.com/macros/s/AKfycbyRRJBUf6iZM3pWoWBYfthc9GRw5BmeRmTSc53BZd7cPLucJ_BiGZ1Lp0Q_ne6pWNMM/exec', {
+                    const response = await fetch('https://script.google.com/macros/s/AKfycby9ZQLnvLCBVligM-aR6TvjoTQjkJP3lbTqmPo2tI9hVqZKW3W65JEd8DfWGtV2ittI/exec', {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: {
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Getting referral stats...');
                     
                     // Get user's referral stats
-                    const statsResponse = await fetch('https://script.google.com/macros/s/AKfycbyRRJBUf6iZM3pWoWBYfthc9GRw5BmeRmTSc53BZd7cPLucJ_BiGZ1Lp0Q_ne6pWNMM/exec?action=stats&wallet=' + encodeURIComponent(walletAddress), {
+                    const statsResponse = await fetch('https://script.google.com/macros/s/AKfycby9ZQLnvLCBVligM-aR6TvjoTQjkJP3lbTqmPo2tI9hVqZKW3W65JEd8DfWGtV2ittI/exec?action=stats&wallet=' + encodeURIComponent(walletAddress), {
                         method: 'GET',
                         mode: 'no-cors',
                         headers: {
