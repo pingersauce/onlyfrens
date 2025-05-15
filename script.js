@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Test API URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbx13_ixwcD4xUuzpN1jzfU4fKhnSEHzy-ruJx6djl5acvgoxkRc3ZRxR1sV_X_XVN0/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyW4Q9R7bmrIGWA4oxv8cV9KvVNxx5vReN0Syk-fjELgP8h82-NhkUTz9LrHczP8saw/exec';
 
     if (submitButton && walletInput) {
         submitButton.addEventListener('click', async () => {
@@ -34,22 +34,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Testing...';
                     
                     console.log('Testing connection to:', API_URL);
+                    console.log('Current origin:', window.location.origin);
                     
-                    // Simple test request
+                    // First try a simple GET request
+                    console.log('Testing GET request...');
+                    try {
+                        const getResponse = await fetch(API_URL);
+                        console.log('GET Response status:', getResponse.status);
+                        const getData = await getResponse.json();
+                        console.log('GET Response data:', getData);
+                    } catch (getError) {
+                        console.error('GET request failed:', getError);
+                    }
+                    
+                    // Then try the POST request
+                    console.log('Testing POST request...');
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Origin': window.location.origin
                         },
                         body: JSON.stringify({
                             test: true,
-                            walletAddress: walletAddress
+                            walletAddress: walletAddress,
+                            origin: window.location.origin
                         })
                     });
                     
-                    console.log('Response status:', response.status);
-                    const data = await response.json();
-                    console.log('Response data:', data);
+                    console.log('POST Response status:', response.status);
+                    console.log('POST Response headers:', Object.fromEntries(response.headers.entries()));
+                    
+                    const text = await response.text();
+                    console.log('Raw response:', text);
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                        console.log('Parsed response:', data);
+                    } catch (parseError) {
+                        console.error('Failed to parse response:', parseError);
+                        throw new Error('Invalid JSON response');
+                    }
                     
                     if (data.status === 'success') {
                         showFeedback('Connection test successful!');
@@ -58,7 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                 } catch (error) {
-                    console.error('Test error:', error);
+                    console.error('Test error:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
                     showFeedback('Error testing connection: ' + error.message, true);
                 } finally {
                     submitButton.disabled = false;
