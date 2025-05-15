@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Test API URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxc6j3bgU8mp7JUQ3hBZHzQNcHIftAuoYs4b4nsDYZAajrBsE_WZNRrK_jQeGiWtI_H/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbx13_ixwcD4xUuzpN1jzfU4fKhnSEHzy-ruJx6djl5acvgoxkRc3ZRxR1sV_X_XVN0/exec';
 
     if (submitButton && walletInput) {
         submitButton.addEventListener('click', async () => {
