@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Submitting...';
                     
                     // Google Apps Script deployment URL
-                    const API_URL = 'https://script.google.com/macros/s/AKfycbxVbEKqIbxnaca9zq598UIiNPgUIJsOQgin7tTCYTN4IsmM9U_NjVVJCy5gZCRvByyR/exec';
+                    const API_URL = 'https://script.google.com/macros/s/AKfycbwdjZMUVoQ86XpHtpA7KNHxmJdT5ZUZXgouzPuqB6KGXF36BnDCAeJk3ZWfSezKrLwQ/exec';
                     
                     console.log('Submitting wallet:', walletAddress);
                     console.log('Request origin:', window.location.origin);
@@ -161,37 +161,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Single API call to submit wallet
                     try {
                         console.log('Starting fetch request...');
-                        const response = await fetch(API_URL, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'Origin': window.location.origin
-                            },
-                            body: JSON.stringify({
-                                walletAddress: walletAddress,
-                                referredBy: urlReferralCode || '',
-                                timestamp: new Date().toISOString(),
-                                action: 'submit',
-                                origin: window.location.origin
-                            })
-                        });
-
-                        console.log('Fetch completed. Status:', response.status);
-                        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                        console.log('Request URL:', API_URL);
                         
-                        // Try to parse the response
-                        let data;
-                        try {
-                            const text = await response.text();
-                            console.log('Raw response text:', text);
-                            data = JSON.parse(text);
-                        } catch (error) {
-                            console.error('Error parsing response:', error);
-                            throw new Error('Invalid response from server: ' + error.message);
-                        }
+                        // Simplified fetch request with retry
+                        const makeRequest = async (retryCount = 0) => {
+                            try {
+                                const response = await fetch(API_URL + '?action=submit&origin=' + encodeURIComponent(window.location.origin), {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        walletAddress: walletAddress,
+                                        referredBy: urlReferralCode || '',
+                                        timestamp: new Date().toISOString()
+                                    })
+                                });
 
+                                console.log('Response status:', response.status);
+                                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                                
+                                const text = await response.text();
+                                console.log('Raw response:', text);
+                                
+                                if (!text) {
+                                    throw new Error('Empty response received');
+                                }
+                                
+                                return JSON.parse(text);
+                            } catch (error) {
+                                console.log(`Request attempt ${retryCount + 1} failed:`, error);
+                                if (retryCount < 2) { // Try up to 3 times
+                                    console.log('Retrying request...');
+                                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                                    return makeRequest(retryCount + 1);
+                                }
+                                throw error;
+                            }
+                        };
+
+                        const data = await makeRequest();
                         console.log('Parsed response:', data);
 
                         if (data.error) {
@@ -214,7 +223,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             message: error.message,
                             stack: error.stack
                         });
-                        showFeedback('Error submitting wallet address: ' + error.message, true);
+                        
+                        // More user-friendly error message
+                        let errorMessage = 'Error submitting wallet address. ';
+                        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                            errorMessage += 'The server is not responding. Please try again in a few moments.';
+                        } else {
+                            errorMessage += error.message;
+                        }
+                        showFeedback(errorMessage, true);
                     } finally {
                         submitButton.disabled = false;
                         submitButton.textContent = 'Submit';
