@@ -1,0 +1,33 @@
+{
+  "wallets": [
+    {
+      "address": "test123456789",
+      "referralCode": "TEST12",
+      "referredBy": "",
+      "timestamp": "2025-05-15T20:07:10.606Z",
+      "bonusPercentage": 0
+    },
+    {
+      "address": "1aiLxWqODqY1wgWFXm_v5UBD-08HeI9lz_RNnYyKZuDA",
+      "referralCode": "1AILXW",
+      "referredBy": "",
+      "timestamp": "2025-05-15T20:10:22.723Z",
+      "bonusPercentage": 0
+    },
+    {
+      "address": "0x3292D0008C03f5539fE59C7f7583cCA3951059E5",
+      "referralCode": "0X3292",
+      "referredBy": "",
+      "timestamp": "2025-05-15T20:09:20.439Z",
+      "bonusPercentage": 0
+    },
+    {
+      "address": "🎉 Welcome to OnlyFrens! 🎉",
+      "referralCode": "🎉 WEL",
+      "referredBy": "",
+      "timestamp": "2025-05-15T20:12:55.512Z",
+      "bonusPercentage": 0
+    }
+  ],
+  "lastUpdated": "2025-05-15T20:07:10.605Z"
+}

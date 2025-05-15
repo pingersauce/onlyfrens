@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
-    // Test API URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwruL1ef15vNIwZlp89eVDJDf7AX_V80xZWt6u4mC2n3xiyA57nq0dXsTeNUzh2W2Dd/exec';
+    // API endpoint - will be automatically handled by Vercel
+    const API_URL = '/api/submit-wallet';
 
     if (submitButton && walletInput) {
         submitButton.addEventListener('click', async () => {
@@ -34,7 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Submitting...';
                     
                     console.log('Submitting wallet:', walletAddress);
-                    console.log('Current origin:', window.location.origin);
+                    
+                    // Get referral code from URL if present
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const referredBy = urlParams.get('ref');
                     
                     // Make the request
                     const response = await fetch(API_URL, {
@@ -43,37 +46,27 @@ document.addEventListener('DOMContentLoaded', () => {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            walletAddress: walletAddress,
-                            origin: window.location.origin
+                            walletAddress,
+                            referredBy
                         })
                     });
                     
                     console.log('Response status:', response.status);
-                    const text = await response.text();
-                    console.log('Raw response:', text);
-                    
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                        console.log('Parsed response:', data);
-                    } catch (parseError) {
-                        console.error('Failed to parse response:', parseError);
-                        throw new Error('Invalid JSON response');
-                    }
+                    const data = await response.json();
+                    console.log('Response:', data);
                     
                     if (data.status === 'success') {
-                        showFeedback('Wallet submitted successfully!');
+                        const message = data.data.referralCount > 0 
+                            ? `Wallet submitted successfully! Your referral code is ${data.data.referralCode} (${data.data.referralCount} referrals)`
+                            : 'Wallet submitted successfully! Your referral code is ' + data.data.referralCode;
+                        showFeedback(message);
                     } else {
-                        showFeedback('Submission failed: ' + (data.message || 'Unknown error'), true);
+                        showFeedback(data.message || 'Submission failed', true);
                     }
                     
                 } catch (error) {
-                    console.error('Submission error:', {
-                        name: error.name,
-                        message: error.message,
-                        stack: error.stack
-                    });
-                    showFeedback('Error submitting wallet: ' + error.message, true);
+                    console.error('Submission error:', error);
+                    showFeedback('Error submitting wallet. Please try again.', true);
                 } finally {
                     submitButton.disabled = false;
                     submitButton.textContent = 'Submit';
