@@ -1,7 +1,7 @@
 // Google Apps Script for handling referrals
 const SPREADSHEET_ID = '1XhsSeeMdgw8Flk8KxDEDmziMnKLHPy9756y8fbeRmKc';
 const SHEET_NAME = 'OnlyFrens Referrals';
-const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'http://localhost:3000', 'https://*.vercel.app'];
+const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'http://localhost:3000', 'https://frensfr.vercel.app'];
 
 // Add logging function with more details and better error handling
 function logToSheet(message, type = 'INFO') {
@@ -79,14 +79,7 @@ function createJsonResponse(data, origin) {
       .setMimeType(ContentService.MimeType.JSON);
     
     // Check if origin is allowed
-    const isAllowedOrigin = ALLOWED_ORIGINS.some(allowedOrigin => {
-      if (allowedOrigin.includes('*')) {
-        // Handle wildcard domains
-        const pattern = allowedOrigin.replace('*', '.*');
-        return new RegExp(pattern).test(origin);
-      }
-      return allowedOrigin === origin;
-    });
+    const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin);
     
     if (isAllowedOrigin) {
       response.setHeader('Access-Control-Allow-Origin', origin);
@@ -98,10 +91,19 @@ function createJsonResponse(data, origin) {
   } catch (error) {
     console.error('Error creating JSON response:', error);
     // Return a basic error response if something goes wrong
-    return ContentService.createTextOutput(JSON.stringify({
+    const errorResponse = ContentService.createTextOutput(JSON.stringify({
       error: 'Internal server error',
       details: error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
+    
+    // Add CORS headers to error response as well
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      errorResponse.setHeader('Access-Control-Allow-Origin', origin);
+      errorResponse.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      errorResponse.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    }
+    
+    return errorResponse;
   }
 }
 
@@ -245,14 +247,7 @@ function doOptions(e) {
     .setMimeType(ContentService.MimeType.TEXT);
   
   // Check if origin is allowed
-  const isAllowedOrigin = ALLOWED_ORIGINS.some(allowedOrigin => {
-    if (allowedOrigin.includes('*')) {
-      // Handle wildcard domains
-      const pattern = allowedOrigin.replace('*', '.*');
-      return new RegExp(pattern).test(origin);
-    }
-    return allowedOrigin === origin;
-  });
+  const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin);
   
   if (isAllowedOrigin) {
     response.setHeader('Access-Control-Allow-Origin', origin);
