@@ -155,22 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Google Apps Script deployment URL
                     const API_URL = 'https://script.google.com/macros/s/AKfycbz0GTtpylR5bSGMyYKRsFp0ZGnPRIVTzid8LyfcimTNwAY2dlor07sQjCpHHyt25Qw/exec';
                     
-                    console.log('Checking wallet:', walletAddress);
+                    console.log('Submitting wallet:', walletAddress);
                     
-                    // First, check if this wallet already exists
-                    const checkResponse = await fetch(`${API_URL}?action=check&wallet=${encodeURIComponent(walletAddress)}&origin=${encodeURIComponent(window.location.origin)}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    }).then(response => response.json()).catch(error => {
-                        console.error('Check wallet error:', error);
-                        throw new Error('Failed to check wallet');
-                    });
-
-                    console.log('Submitting wallet to Google Sheets...');
-                    
-                    // Send to Google Sheets
+                    // Single API call to submit wallet
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: {
@@ -184,37 +171,42 @@ document.addEventListener('DOMContentLoaded', () => {
                             action: 'submit',
                             origin: window.location.origin
                         })
-                    }).then(response => response.json()).catch(error => {
-                        console.error('Submit wallet error:', error);
-                        throw new Error('Failed to submit wallet');
                     });
 
-                    console.log('Getting referral stats...');
+                    // Log the raw response for debugging
+                    console.log('Raw response:', response);
+                    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
                     
-                    // Get user's referral stats
-                    const statsResponse = await fetch(`${API_URL}?action=stats&wallet=${encodeURIComponent(walletAddress)}&origin=${encodeURIComponent(window.location.origin)}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    }).then(response => response.json()).catch(error => {
-                        console.error('Get stats error:', error);
-                        throw new Error('Failed to get referral stats');
-                    });
+                    // Try to parse the response
+                    let data;
+                    try {
+                        const text = await response.text();
+                        console.log('Response text:', text);
+                        data = JSON.parse(text);
+                    } catch (error) {
+                        console.error('Error parsing response:', error);
+                        throw new Error('Invalid response from server');
+                    }
 
-                    console.log('All operations completed successfully');
+                    console.log('Parsed response:', data);
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    console.log('Wallet submitted successfully');
                     showFeedback('Wallet address submitted successfully!');
                     walletInput.value = '';
                     
                     // Show referral popup with user's data
-                    const userReferralCode = response.referralCode || walletAddress.substring(0, 6).toUpperCase();
-                    const bonusPercentage = response.bonusPercentage || 0;
-                    const referralCount = response.referralCount || 0;
+                    const userReferralCode = data.referralCode || walletAddress.substring(0, 6).toUpperCase();
+                    const bonusPercentage = data.bonusPercentage || 0;
+                    const referralCount = data.referralCount || 0;
                     showReferralPopup(userReferralCode, bonusPercentage, referralCount);
                     
                 } catch (error) {
                     console.error('Error in wallet submission process:', error);
-                    showFeedback('Error submitting wallet address. Please try again.', true);
+                    showFeedback(error.message || 'Error submitting wallet address. Please try again.', true);
                 } finally {
                     submitButton.disabled = false;
                     submitButton.textContent = 'Submit';
