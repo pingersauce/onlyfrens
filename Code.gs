@@ -1,6 +1,7 @@
 // Google Apps Script for handling referrals
 const SPREADSHEET_ID = '1XhsSeeMdgw8Flk8KxDEDmziMnKLHPy9756y8fbeRmKc';
 const SHEET_NAME = 'OnlyFrens Referrals';
+const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'http://localhost:3000'];
 
 // Add logging function with more details and better error handling
 function logToSheet(message, type = 'INFO') {
@@ -55,9 +56,18 @@ function logToSheet(message, type = 'INFO') {
 }
 
 // Create JSON response with CORS headers
-function createJsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
+function createJsonResponse(data, origin) {
+  const response = ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+  
+  // Add CORS headers if origin is allowed
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  
+  return response;
 }
 
 // Verify sheet setup with better error handling
@@ -112,6 +122,7 @@ function verifySheetSetup() {
 
 // Main entry points for web app
 function doGet(e) {
+  const origin = e.parameter.origin || '';
   logToSheet('GET request received: ' + JSON.stringify(e.parameters), 'REQUEST');
   
   try {
@@ -140,17 +151,18 @@ function doGet(e) {
       throw new Error('Invalid action: ' + action);
     }
     
-    return createJsonResponse(response);
+    return createJsonResponse(response, origin);
   } catch (error) {
     logToSheet('Error in doGet: ' + error.toString(), 'ERROR');
     return createJsonResponse({ 
       error: error.toString(),
       parameters: e.parameters 
-    });
+    }, origin);
   }
 }
 
 function doPost(e) {
+  const origin = e.postData?.contents ? JSON.parse(e.postData.contents).origin : '';
   logToSheet('POST request received: ' + e.postData.contents, 'REQUEST');
   
   try {
@@ -179,19 +191,20 @@ function doPost(e) {
       throw new Error('Invalid action: ' + data.action);
     }
     
-    return createJsonResponse(response);
+    return createJsonResponse(response, origin);
   } catch (error) {
     logToSheet('Error in doPost: ' + error.toString(), 'ERROR');
     return createJsonResponse({ 
       error: error.toString(),
       receivedData: e.postData ? e.postData.contents : 'No data'
-    });
+    }, origin);
   }
 }
 
 // Handle OPTIONS request for CORS
 function doOptions(e) {
-  return createJsonResponse({});
+  const origin = e.parameter.origin || e.postData?.contents ? JSON.parse(e.postData.contents).origin : '';
+  return createJsonResponse({}, origin);
 }
 
 // Handler functions

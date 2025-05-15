@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Checking wallet:', walletAddress);
                     
                     // First, check if this wallet already exists
-                    const checkResponse = await fetch(`${API_URL}?action=check&wallet=${encodeURIComponent(walletAddress)}`, {
+                    const checkResponse = await fetch(`${API_URL}?action=check&wallet=${encodeURIComponent(walletAddress)}&origin=${encodeURIComponent(window.location.origin)}`, {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/json'
@@ -181,7 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             walletAddress: walletAddress,
                             referredBy: urlReferralCode || '',
                             timestamp: new Date().toISOString(),
-                            action: 'submit'
+                            action: 'submit',
+                            origin: window.location.origin
                         })
                     }).then(response => response.json()).catch(error => {
                         console.error('Submit wallet error:', error);
@@ -191,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Getting referral stats...');
                     
                     // Get user's referral stats
-                    const statsResponse = await fetch(`${API_URL}?action=stats&wallet=${encodeURIComponent(walletAddress)}`, {
+                    const statsResponse = await fetch(`${API_URL}?action=stats&wallet=${encodeURIComponent(walletAddress)}&origin=${encodeURIComponent(window.location.origin)}`, {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/json'
