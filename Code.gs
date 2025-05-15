@@ -1,176 +1,404 @@
 // Google Apps Script for handling referrals
-const SPREADSHEET_ID = '1-92t8fsEOpGVTgOUGFy-hjgcSUecuZKvRkWwu8tgvtw'; // Your spreadsheet ID
-const SHEET_NAME = 'frens';
+const SPREADSHEET_ID = '1XhsSeeMdgw8Flk8KxDEDmziMnKLHPy9756y8fbeRmKc';
+const SHEET_NAME = 'OnlyFrens Referrals';
 
-function doGet(e) {
-  const action = e.parameter.action;
-  
-  if (action === 'check') {
-    return handleCheck(e);
-  } else if (action === 'stats') {
-    return handleStats(e);
+// Add logging function with more details and better error handling
+function logToSheet(message, type = 'INFO') {
+  try {
+    // First try to get the spreadsheet
+    let spreadsheet;
+    try {
+      spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    } catch (error) {
+      console.error('Failed to open spreadsheet:', error);
+      return; // Exit silently if we can't access the spreadsheet
+    }
+
+    // Then try to get or create the log sheet
+    let logSheet;
+    try {
+      logSheet = spreadsheet.getSheetByName('Logs');
+      if (!logSheet) {
+        logSheet = spreadsheet.insertSheet('Logs');
+        // Add headers if it's a new sheet
+        logSheet.appendRow(['Timestamp', 'Type', 'Message', 'Details']);
+      }
+    } catch (error) {
+      console.error('Failed to get/create log sheet:', error);
+      return; // Exit silently if we can't access the log sheet
+    }
+
+    // Get stack trace if available
+    let stackTrace = '';
+    try {
+      throw new Error();
+    } catch (e) {
+      stackTrace = e.stack;
+    }
+
+    // Try to append the log entry
+    try {
+      logSheet.appendRow([
+        new Date().toISOString(),
+        type,
+        message,
+        stackTrace
+      ]);
+    } catch (error) {
+      console.error('Failed to append log entry:', error);
+      return; // Exit silently if we can't write to the log sheet
+    }
+  } catch (error) {
+    console.error('Logging error:', error);
+    // Don't throw the error, just log it to console
   }
-  
-  return ContentService.createTextOutput(JSON.stringify({ error: 'Invalid action' }))
+}
+
+// Create JSON response with CORS headers
+function createJsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Verify sheet setup with better error handling
+function verifySheetSetup() {
+  try {
+    // First try to get the spreadsheet
+    let spreadsheet;
+    try {
+      spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    } catch (error) {
+      logToSheet('Failed to open spreadsheet: ' + error.toString(), 'ERROR');
+      throw new Error('Cannot access spreadsheet. Please check permissions.');
+    }
+
+    // Then try to get the sheet
+    let sheet;
+    try {
+      sheet = spreadsheet.getSheetByName(SHEET_NAME);
+      if (!sheet) {
+        throw new Error(`Sheet "${SHEET_NAME}" not found`);
+      }
+    } catch (error) {
+      logToSheet('Failed to get sheet: ' + error.toString(), 'ERROR');
+      throw error;
+    }
+
+    // Try to get headers
+    let headers;
+    try {
+      headers = sheet.getRange(1, 1, 1, 5).getValues()[0];
+    } catch (error) {
+      logToSheet('Failed to get headers: ' + error.toString(), 'ERROR');
+      throw new Error('Cannot read sheet headers. Please check permissions.');
+    }
+
+    const requiredHeaders = ['Wallet Address', 'Referral Code', 'Referred By', 'Timestamp', 'Bonus Percentage'];
+    
+    for (const header of requiredHeaders) {
+      if (!headers.includes(header)) {
+        const error = `Missing required header: ${header}`;
+        logToSheet(error, 'ERROR');
+        throw new Error(error);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    logToSheet('Sheet setup verification failed: ' + error.toString(), 'ERROR');
+    throw error;
+  }
+}
+
+// Main entry points for web app
+function doGet(e) {
+  logToSheet('GET request received: ' + JSON.stringify(e.parameters), 'REQUEST');
+  
+  try {
+    // Verify sheet setup first
+    verifySheetSetup();
+    
+    const action = e.parameter.action;
+    const wallet = e.parameter.wallet;
+    
+    if (!action) {
+      throw new Error('Missing action parameter');
+    }
+    
+    if (!wallet && (action === 'check' || action === 'stats')) {
+      throw new Error('Missing wallet parameter');
+    }
+    
+    let response;
+    if (action === 'check') {
+      logToSheet(`Processing check request for wallet: ${wallet}`, 'INFO');
+      response = handleCheck(e);
+    } else if (action === 'stats') {
+      logToSheet(`Processing stats request for wallet: ${wallet}`, 'INFO');
+      response = handleStats(e);
+    } else {
+      throw new Error('Invalid action: ' + action);
+    }
+    
+    return createJsonResponse(response);
+  } catch (error) {
+    logToSheet('Error in doGet: ' + error.toString(), 'ERROR');
+    return createJsonResponse({ 
+      error: error.toString(),
+      parameters: e.parameters 
+    });
+  }
 }
 
 function doPost(e) {
-  const data = JSON.parse(e.postData.contents);
-  const action = data.action;
+  logToSheet('POST request received: ' + e.postData.contents, 'REQUEST');
   
-  if (action === 'submit') {
-    return handleSubmit(data);
+  try {
+    // Verify sheet setup first
+    verifySheetSetup();
+    
+    if (!e.postData || !e.postData.contents) {
+      throw new Error('No data received in POST request');
+    }
+    
+    const data = JSON.parse(e.postData.contents);
+    logToSheet('Parsed POST data: ' + JSON.stringify(data), 'INFO');
+    
+    if (!data.action) {
+      throw new Error('Missing action in POST data');
+    }
+    
+    let response;
+    if (data.action === 'submit') {
+      if (!data.walletAddress) {
+        throw new Error('Missing walletAddress in submit action');
+      }
+      logToSheet(`Processing submit request for wallet: ${data.walletAddress}`, 'INFO');
+      response = handleSubmit(data);
+    } else {
+      throw new Error('Invalid action: ' + data.action);
+    }
+    
+    return createJsonResponse(response);
+  } catch (error) {
+    logToSheet('Error in doPost: ' + error.toString(), 'ERROR');
+    return createJsonResponse({ 
+      error: error.toString(),
+      receivedData: e.postData ? e.postData.contents : 'No data'
+    });
   }
-  
-  return ContentService.createTextOutput(JSON.stringify({ error: 'Invalid action' }))
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
+// Handle OPTIONS request for CORS
+function doOptions(e) {
+  return createJsonResponse({});
+}
+
+// Handler functions
 function handleCheck(e) {
-  const wallet = e.parameter.wallet;
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  
-  // Skip header row
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === wallet) {
-      return ContentService.createTextOutput(JSON.stringify({
-        exists: true,
-        referralCode: data[i][1], // Assuming column B contains referral codes
-        bonusPercentage: calculateBonus(data[i][0]),
-        referralCount: countReferrals(data[i][1])
-      })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    const wallet = e.parameter.wallet;
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    
+    // Skip header row
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === wallet) {
+        return {
+          exists: true,
+          referralCode: data[i][1],
+          bonusPercentage: calculateBonus(data[i][0]),
+          referralCount: countReferrals(data[i][1])
+        };
+      }
     }
+    
+    return { exists: false };
+  } catch (error) {
+    logToSheet('Error in handleCheck: ' + error.toString(), 'ERROR');
+    throw error;
   }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    exists: false
-  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function handleStats(e) {
-  const wallet = e.parameter.wallet;
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  
-  // Skip header row
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === wallet) {
-      const referralCode = data[i][1];
-      const bonusPercentage = calculateBonus(wallet);
-      const referralCount = countReferrals(referralCode);
-      
-      return ContentService.createTextOutput(JSON.stringify({
-        referralCode: referralCode,
-        bonusPercentage: bonusPercentage,
-        referralCount: referralCount
-      })).setMimeType(ContentService.MimeType.JSON);
+  try {
+    const wallet = e.parameter.wallet;
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    
+    // Skip header row
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === wallet) {
+        const referralCode = data[i][1];
+        const bonusPercentage = calculateBonus(wallet);
+        const referralCount = countReferrals(referralCode);
+        
+        return {
+          referralCode: referralCode,
+          bonusPercentage: bonusPercentage,
+          referralCount: referralCount
+        };
+      }
     }
+    
+    return { error: 'Wallet not found' };
+  } catch (error) {
+    logToSheet('Error in handleStats: ' + error.toString(), 'ERROR');
+    throw error;
   }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    error: 'Wallet not found'
-  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function handleSubmit(data) {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const walletAddress = data.walletAddress;
-  const referredBy = data.referredBy;
-  const timestamp = data.timestamp;
-  
-  // Check if wallet already exists
-  const existingData = sheet.getDataRange().getValues();
-  let referralCode = '';
-  let rowIndex = -1;
-  
-  // Skip header row
-  for (let i = 1; i < existingData.length; i++) {
-    if (existingData[i][0] === walletAddress) {
-      referralCode = existingData[i][1];
-      rowIndex = i + 1;
-      break;
-    }
-  }
-  
-  // If wallet doesn't exist, generate new referral code
-  if (!referralCode) {
-    referralCode = generateReferralCode(walletAddress);
-    rowIndex = sheet.getLastRow() + 1;
+  try {
+    logToSheet('Starting handleSubmit for wallet: ' + data.walletAddress, 'INFO');
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
     
-    // Add new row
-    sheet.appendRow([
-      walletAddress,
-      referralCode,
-      referredBy,
-      timestamp,
-      0 // Initial bonus percentage
-    ]);
-  } else {
-    // Update existing row with new timestamp
-    sheet.getRange(rowIndex, 4).setValue(timestamp);
+    // Verify sheet headers
+    const headers = sheet.getRange(1, 1, 1, 5).getValues()[0];
+    logToSheet('Sheet headers: ' + JSON.stringify(headers), 'INFO');
+    
+    if (!headers.includes('Wallet Address') || !headers.includes('Referral Code')) {
+      throw new Error('Required headers not found in sheet');
+    }
+    
+    const walletAddress = data.walletAddress;
+    const referredBy = data.referredBy;
+    const timestamp = data.timestamp;
+    
+    logToSheet(`Processing wallet: ${walletAddress}, referred by: ${referredBy}`, 'INFO');
+    
+    // Check if wallet already exists
+    const existingData = sheet.getDataRange().getValues();
+    let referralCode = '';
+    let rowIndex = -1;
+    
+    // Skip header row
+    for (let i = 1; i < existingData.length; i++) {
+      if (existingData[i][0] === walletAddress) {
+        referralCode = existingData[i][1];
+        rowIndex = i + 1;
+        logToSheet(`Found existing wallet at row: ${rowIndex}`, 'INFO');
+        break;
+      }
+    }
+    
+    // If wallet doesn't exist, generate new referral code
+    if (!referralCode) {
+      referralCode = generateReferralCode(walletAddress);
+      rowIndex = sheet.getLastRow() + 1;
+      
+      logToSheet(`Adding new wallet with referral code: ${referralCode}`, 'INFO');
+      
+      try {
+        // Add new row
+        sheet.appendRow([
+          walletAddress,
+          referralCode,
+          referredBy || '',
+          timestamp,
+          0 // Initial bonus percentage
+        ]);
+        
+        logToSheet('Successfully added new wallet', 'SUCCESS');
+      } catch (error) {
+        logToSheet('Error adding new row: ' + error.toString(), 'ERROR');
+        throw error;
+      }
+    } else {
+      // Update existing row with new timestamp
+      try {
+        sheet.getRange(rowIndex, 4).setValue(timestamp);
+        logToSheet('Updated timestamp for existing wallet', 'INFO');
+      } catch (error) {
+        logToSheet('Error updating timestamp: ' + error.toString(), 'ERROR');
+        throw error;
+      }
+    }
+    
+    // If user was referred, update referrer's bonus
+    if (referredBy) {
+      logToSheet('Updating referrer bonus for: ' + referredBy, 'INFO');
+      try {
+        updateReferrerBonus(referredBy);
+      } catch (error) {
+        logToSheet('Error updating referrer bonus: ' + error.toString(), 'ERROR');
+        // Don't throw here, as the main operation succeeded
+      }
+    }
+    
+    return {
+      success: true,
+      referralCode: referralCode,
+      bonusPercentage: calculateBonus(walletAddress),
+      referralCount: countReferrals(referralCode)
+    };
+  } catch (error) {
+    logToSheet('Error in handleSubmit: ' + error.toString(), 'ERROR');
+    throw error;
   }
-  
-  // If user was referred, update referrer's bonus
-  if (referredBy) {
-    updateReferrerBonus(referredBy);
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify({
-    success: true,
-    referralCode: referralCode,
-    bonusPercentage: calculateBonus(walletAddress),
-    referralCount: countReferrals(referralCode)
-  })).setMimeType(ContentService.MimeType.JSON);
 }
 
+// Utility functions
 function generateReferralCode(walletAddress) {
-  // Use first 6 characters of wallet address as referral code
   return walletAddress.substring(0, 6).toUpperCase();
 }
 
 function calculateBonus(walletAddress) {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  let referralCount = 0;
-  
-  // Skip header row
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][2] === walletAddress) { // Column C contains referredBy
-      referralCount++;
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    let referralCount = 0;
+    
+    // Skip header row
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][2] === walletAddress) { // Column C contains referredBy
+        referralCount++;
+      }
     }
+    
+    // 10% bonus per referral, capped at 100%
+    return Math.min(referralCount * 10, 100);
+  } catch (error) {
+    logToSheet('Error in calculateBonus: ' + error.toString(), 'ERROR');
+    return 0; // Return 0 if there's an error
   }
-  
-  // 10% bonus per referral, capped at 100%
-  return Math.min(referralCount * 10, 100);
 }
 
 function countReferrals(referralCode) {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  let count = 0;
-  
-  // Skip header row
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][2] === referralCode) { // Column C contains referredBy
-      count++;
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    let count = 0;
+    
+    // Skip header row
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][2] === referralCode) { // Column C contains referredBy
+        count++;
+      }
     }
+    
+    return count;
+  } catch (error) {
+    logToSheet('Error in countReferrals: ' + error.toString(), 'ERROR');
+    return 0; // Return 0 if there's an error
   }
-  
-  return count;
 }
 
 function updateReferrerBonus(referralCode) {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  
-  // Skip header row
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][1] === referralCode) { // Column B contains referral codes
-      const bonusPercentage = calculateBonus(data[i][0]); // Column A contains wallet addresses
-      sheet.getRange(i + 1, 5).setValue(bonusPercentage); // Column E stores bonus percentage
-      break;
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const data = sheet.getDataRange().getValues();
+    
+    // Skip header row
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][1] === referralCode) { // Column B contains referral codes
+        const bonusPercentage = calculateBonus(data[i][0]); // Column A contains wallet addresses
+        sheet.getRange(i + 1, 5).setValue(bonusPercentage); // Column E stores bonus percentage
+        break;
+      }
     }
+  } catch (error) {
+    logToSheet('Error in updateReferrerBonus: ' + error.toString(), 'ERROR');
+    throw error;
   }
 } 
