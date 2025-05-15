@@ -157,13 +157,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Submitting...';
                     
                     // First, check if this wallet already exists
-                    const checkResponse = await fetch('https://script.google.com/macros/s/AKfycbz0Beohr935d494aKjgOEKbCYrh6p016h6QENJMjkE2IyTIP4Qu718mfrSjHBSmQKE/exec?action=check&wallet=' + encodeURIComponent(walletAddress), {
+                    const checkResponse = await fetch('https://script.google.com/macros/s/AKfycbyRRJBUf6iZM3pWoWBYfthc9GRw5BmeRmTSc53BZd7cPLucJ_BiGZ1Lp0Q_ne6pWNMM/exec?action=check&wallet=' + encodeURIComponent(walletAddress), {
                         method: 'GET',
                         mode: 'no-cors'
                     });
 
                     // Send to Google Sheets
-                    const response = await fetch('https://script.google.com/macros/s/AKfycbz0Beohr935d494aKjgOEKbCYrh6p016h6QENJMjkE2IyTIP4Qu718mfrSjHBSmQKE/exec', {
+                    const response = await fetch('https://script.google.com/macros/s/AKfycbyRRJBUf6iZM3pWoWBYfthc9GRw5BmeRmTSc53BZd7cPLucJ_BiGZ1Lp0Q_ne6pWNMM/exec', {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: {
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     walletInput.value = '';
                     
                     // Get user's referral stats
-                    const statsResponse = await fetch('https://script.google.com/macros/s/AKfycbz0Beohr935d494aKjgOEKbCYrh6p016h6QENJMjkE2IyTIP4Qu718mfrSjHBSmQKE/exec?action=stats&wallet=' + encodeURIComponent(walletAddress), {
+                    const statsResponse = await fetch('https://script.google.com/macros/s/AKfycbyRRJBUf6iZM3pWoWBYfthc9GRw5BmeRmTSc53BZd7cPLucJ_BiGZ1Lp0Q_ne6pWNMM/exec?action=stats&wallet=' + encodeURIComponent(walletAddress), {
                         method: 'GET',
                         mode: 'no-cors'
                     });
