@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.textContent = 'Submitting...';
                     
                     // Google Apps Script deployment URL
-                    const API_URL = 'https://script.google.com/macros/s/AKfycbwHPT0OXwc8iwHb0-8TWEvKy5pLW9Ws_XYbvnAbtEDbDgxwN3pt9-sA47PtupePN7Po/exec';
+                    const API_URL = 'https://script.google.com/macros/s/AKfycbzlovJlkWJ8lZat6CV4O61zMr0wL-422WGYRO-Hcrnrh_90brCF1Jw_GVXRHQj6Jlj5/exec';
                     
                     console.log('Checking wallet:', walletAddress);
                     
