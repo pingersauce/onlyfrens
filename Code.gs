@@ -5,6 +5,7 @@ const ALLOWED_ORIGINS = ['https://frensfr.vercel.app', 'http://localhost:3000'];
 
 // Add logging function with more details and better error handling
 function logToSheet(message, type = 'INFO') {
+  // Don't throw any errors from this function, just log to console
   try {
     // First try to get the spreadsheet
     let spreadsheet;
@@ -20,12 +21,17 @@ function logToSheet(message, type = 'INFO') {
     try {
       logSheet = spreadsheet.getSheetByName('Logs');
       if (!logSheet) {
-        logSheet = spreadsheet.insertSheet('Logs');
-        // Add headers if it's a new sheet
-        logSheet.appendRow(['Timestamp', 'Type', 'Message', 'Details']);
+        try {
+          logSheet = spreadsheet.insertSheet('Logs');
+          // Add headers if it's a new sheet
+          logSheet.appendRow(['Timestamp', 'Type', 'Message', 'Details']);
+        } catch (error) {
+          console.error('Failed to create log sheet:', error);
+          return; // Exit silently if we can't create the log sheet
+        }
       }
     } catch (error) {
-      console.error('Failed to get/create log sheet:', error);
+      console.error('Failed to get log sheet:', error);
       return; // Exit silently if we can't access the log sheet
     }
 
@@ -34,20 +40,31 @@ function logToSheet(message, type = 'INFO') {
     try {
       throw new Error();
     } catch (e) {
-      stackTrace = e.stack;
+      stackTrace = e.stack || '';
     }
 
     // Try to append the log entry
     try {
-      logSheet.appendRow([
-        new Date().toISOString(),
-        type,
-        message,
-        stackTrace
-      ]);
+      const timestamp = new Date().toISOString();
+      const logEntry = [timestamp, type, message, stackTrace];
+      
+      // Use try-catch for each operation
+      try {
+        logSheet.appendRow(logEntry);
+      } catch (error) {
+        console.error('Failed to append log entry:', error);
+        // Try alternative method if appendRow fails
+        try {
+          const lastRow = logSheet.getLastRow();
+          logSheet.getRange(lastRow + 1, 1, 1, 4).setValues([logEntry]);
+        } catch (error2) {
+          console.error('Failed to set log entry values:', error2);
+          return; // Exit silently if both methods fail
+        }
+      }
     } catch (error) {
-      console.error('Failed to append log entry:', error);
-      return; // Exit silently if we can't write to the log sheet
+      console.error('Error in log entry creation:', error);
+      return; // Exit silently if we can't create the log entry
     }
   } catch (error) {
     console.error('Logging error:', error);
@@ -57,17 +74,26 @@ function logToSheet(message, type = 'INFO') {
 
 // Create JSON response with CORS headers
 function createJsonResponse(data, origin) {
-  const response = ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-  
-  // Add CORS headers if origin is allowed
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    response.setHeader('Access-Control-Allow-Origin', origin);
-    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  try {
+    const response = ContentService.createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+    
+    // Add CORS headers if origin is allowed
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      response.setHeader('Access-Control-Allow-Origin', origin);
+      response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Error creating JSON response:', error);
+    // Return a basic error response if something goes wrong
+    return ContentService.createTextOutput(JSON.stringify({
+      error: 'Internal server error',
+      details: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
   }
-  
-  return response;
 }
 
 // Verify sheet setup with better error handling
