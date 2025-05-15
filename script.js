@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check for referral code in URL
     const urlParams = new URLSearchParams(window.location.search);
-    const referralCode = urlParams.get('ref');
+    const urlReferralCode = urlParams.get('ref');
 
     if (submitButton && walletInput) {
         submitButton.addEventListener('click', async () => {
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         },
                         body: JSON.stringify({
                             walletAddress: walletAddress,
-                            referredBy: referralCode || '',
+                            referredBy: urlReferralCode || '',
                             timestamp: new Date().toISOString(),
                             action: 'submit'
                         })
@@ -206,10 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     walletInput.value = '';
                     
                     // Show referral popup with user's data
-                    const referralCode = response.referralCode || walletAddress.substring(0, 6).toUpperCase();
+                    const userReferralCode = response.referralCode || walletAddress.substring(0, 6).toUpperCase();
                     const bonusPercentage = response.bonusPercentage || 0;
                     const referralCount = response.referralCount || 0;
-                    showReferralPopup(referralCode, bonusPercentage, referralCount);
+                    showReferralPopup(userReferralCode, bonusPercentage, referralCount);
                     
                 } catch (error) {
                     console.error('Error in wallet submission process:', error);
