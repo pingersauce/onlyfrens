@@ -4,74 +4,157 @@ document.addEventListener('DOMContentLoaded', () => {
     const walletInput = document.getElementById('walletAddress');
     const container = document.querySelector('.container');
 
+    // Create popup element for invalid wallet
+    const invalidWalletPopup = document.createElement('div');
+    invalidWalletPopup.id = 'invalidWalletPopup';
+    invalidWalletPopup.style.cssText = `
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(26, 26, 46, 0.95);
+        padding: 2rem;
+        border-radius: 12px;
+        border: 1px solid #ff4444;
+        color: white;
+        z-index: 1000;
+        max-width: 90%;
+        width: 400px;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    `;
+    invalidWalletPopup.innerHTML = `
+        <h2 style="color: #ff4444; margin-bottom: 1rem;">Invalid Wallet Address</h2>
+        <p style="color: #e0e0e0; margin-bottom: 1.5rem;">
+            Please enter a valid Solana wallet address.<br>
+            It should be 32-44 characters long and contain only base58 characters.
+        </p>
+        <button id="closeInvalidPopup" style="
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        ">Close</button>
+    `;
+    document.body.appendChild(invalidWalletPopup);
+
+    // Add overlay for invalid wallet popup
+    const invalidWalletOverlay = document.createElement('div');
+    invalidWalletOverlay.id = 'invalidWalletOverlay';
+    invalidWalletOverlay.style.cssText = `
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 999;
+    `;
+    document.body.appendChild(invalidWalletOverlay);
+
+    // Function to show invalid wallet popup
+    function showInvalidWalletPopup() {
+        invalidWalletPopup.style.display = 'block';
+        invalidWalletOverlay.style.display = 'block';
+    }
+
+    // Function to hide invalid wallet popup
+    function hideInvalidWalletPopup() {
+        invalidWalletPopup.style.display = 'none';
+        invalidWalletOverlay.style.display = 'none';
+    }
+
+    // Add event listener for closing invalid wallet popup
+    document.getElementById('closeInvalidPopup').addEventListener('click', hideInvalidWalletPopup);
+    invalidWalletOverlay.addEventListener('click', hideInvalidWalletPopup);
+
+    // Function to validate Solana wallet address
+    function isValidSolanaWallet(address) {
+        // Solana addresses are 32-44 characters long and use base58 encoding
+        const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+        return base58Regex.test(address);
+    }
+
     // Create feedback element
     const feedbackElement = document.createElement('div');
     feedbackElement.className = 'feedback-message';
-    container.insertBefore(feedbackElement, document.querySelector('.image-gallery'));
+    container.insertBefore(feedbackElement, document.querySelector('.image-container'));
 
     function showFeedback(message, isError = false) {
         feedbackElement.textContent = message;
         feedbackElement.className = `feedback-message ${isError ? 'error' : 'success'}`;
         feedbackElement.style.display = 'block';
         
-        // Hide feedback after 5 seconds
         setTimeout(() => {
             feedbackElement.style.display = 'none';
         }, 5000);
     }
 
-    // API endpoint - will be the same domain in production
-    const API_URL = '/api/submit-wallet';
+    // API endpoint
+    const API_URL = '/api/wallets';
 
     if (submitButton && walletInput) {
-        submitButton.addEventListener('click', async () => {
+        submitButton.addEventListener('click', async (e) => {
+            e.preventDefault();
             const walletAddress = walletInput.value.trim();
             
-            if (walletAddress) {
-                try {
-                    // Visual feedback
-                    submitButton.disabled = true;
-                    submitButton.textContent = 'Submitting...';
-                    
-                    console.log('Submitting wallet:', walletAddress);
-                    
-                    // Get referral code from URL if present
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const referredBy = urlParams.get('ref');
-                    
-                    // Make the request
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            walletAddress,
-                            referredBy
-                        })
-                    });
-                    
-                    console.log('Response status:', response.status);
-                    const data = await response.json();
-                    console.log('Response:', data);
-                    
-                    if (data.status === 'success') {
-                        showFeedback('Wallet submitted successfully!');
-                        // Show the referral popup with the referral code
-                        showReferralPopup(data.data.referralCode);
-                    } else {
-                        showFeedback(data.message || 'Submission failed', true);
-                    }
-                    
-                } catch (error) {
-                    console.error('Submission error:', error);
-                    showFeedback('Error submitting wallet. Please try again.', true);
-                } finally {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Submit';
-                }
-            } else {
+            if (!walletAddress) {
                 showFeedback('Please enter a wallet address', true);
+                return;
+            }
+
+            if (!isValidSolanaWallet(walletAddress)) {
+                showInvalidWalletPopup();
+                return;
+            }
+
+            try {
+                // Visual feedback
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+                
+                console.log('Submitting wallet:', walletAddress);
+                
+                // Get referral code from URL if present
+                const urlParams = new URLSearchParams(window.location.search);
+                const referredBy = urlParams.get('ref');
+                
+                // Make the request
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        walletAddress,
+                        referredBy
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response:', data);
+                
+                if (data.status === 'success') {
+                    showFeedback('Wallet submitted successfully!');
+                    // Show the referral popup with the referral code
+                    showReferralPopup(data.data.referralCode);
+                } else {
+                    showFeedback(data.message || 'Submission failed', true);
+                }
+                
+            } catch (error) {
+                console.error('Submission error:', error);
+                showFeedback('Error submitting wallet. Please try again.', true);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit';
             }
         });
     }
