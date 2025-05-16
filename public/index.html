@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="OnlyFrens - Believe in our Creators">
     <meta name="theme-color" content="#1a1a2e">
-    <title>Wallet Collector</title>
+    <title>OnlyFrens Wallet Connect</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/jpeg" href="believe-logo.jpg">
     <script type="importmap">
@@ -15,121 +15,95 @@
             }
         }
     </script>
-    <!-- Optional: Link to a techy font if desired -->
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"> -->
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+        /* Referral popup modal styles */
+        .referral-modal {
+            display: none; /* Hidden by default */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center;
         }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .referral-modal-content {
+            background-color: #1a1a2e; color: #e0e0e0; padding: 20px; border-radius: 10px; box-shadow: 0 0 20px rgba(0, 191, 255, 0.2); max-width: 500px; width: 100%; text-align: center; border: 1px solid rgba(70, 70, 100, 0.5);
         }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #666;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .message {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #dff0d8;
-            color: #3c763d;
-        }
-        .error {
-            background-color: #f2dede;
-            color: #a94442;
-        }
-        #walletList {
-            margin-top: 20px;
-        }
-        .wallet-item {
-            background-color: #f9f9f9;
-            padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .delete-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .delete-btn:hover {
-            background-color: #c82333;
+        .referral-modal h2 { color: #00ffff; margin-bottom: 15px; }
+        .referral-modal p { margin-bottom: 15px; }
+        .referral-modal input { width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #00bfff; border-radius: 5px; background-color: #2a2a4a; color: #e0e0e0; }
+        .referral-modal button { background-color: #00bfff; color: #1a1a2e; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
+        .referral-modal button:hover { background-color: #00ffff; }
+        .believe-logo:hover {
+            box-shadow: 0 0 10px green;
         }
     </style>
+    <!-- Optional: Link to a techy font if desired -->
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"> -->
 </head>
 <body>
     <div class="container">
-        <h1>Wallet Collector</h1>
-        
+        <h1>OnlyFrens Wallet Connect</h1>
+        <div class="eligibility-info">
+            Connect your wallet to join the OnlyFrens airdrop and community!<br>
+            Early users get exclusive rewards.
+        </div>
         <form id="walletForm">
-            <div class="form-group">
-                <label for="walletAddress">Wallet Address:</label>
-                <input type="text" id="walletAddress" name="walletAddress" required 
-                       placeholder="Enter your wallet address">
+            <div class="input-group">
+                <label for="walletAddress">Wallet Address</label>
+                <div class="input-button-row">
+                    <input type="text" id="walletAddress" name="walletAddress" required placeholder="Enter your wallet address">
+                    <button type="submit" id="submitWallet">Submit</button>
+                </div>
             </div>
-            <button type="submit">Submit Wallet</button>
         </form>
+        <div class="feedback-message" id="message"></div>
+        <div class="image-gallery">
+            <img src="anime-comparison-1.png" alt="Anime Comparison 1">
+            <img src="anime-comparison-2.png" alt="Anime Comparison 2">
+            <img src="anime-comparison-3.png" alt="Anime Comparison 3">
+            <img src="anime-comparison-4.png" alt="Anime Comparison 4">
+        </div>
+        <div class="powered-by">
+            <p>Powered by Believe</p>
+            <a href="https://believe.app/" target="_blank" rel="noopener noreferrer">
+                <img src="believe-logo.jpg" alt="Believe Logo" class="believe-logo">
+            </a>
+        </div>
+    </div>
 
-        <div id="message"></div>
-        
-        <div id="walletList">
-            <h2>Submitted Wallets</h2>
-            <div id="wallets"></div>
+    <!-- Referral popup modal -->
+    <div id="referralModal" class="referral-modal">
+        <div class="referral-modal-content">
+            <h2>Referral Link</h2>
+            <p>Your Airdrop will be increased 10% for each user you refer</p>
+            <input type="text" id="referralLink" readonly value="https://onlyfrens.com/ref?wallet=YOUR_WALLET" />
+            <button onclick="copyReferralLink()">Copy Link</button>
+            <button onclick="closeReferralModal()">Close</button>
+            <p class="motto">We goon together, we moon together!</p>
+        </div>
+    </div>
+
+    <!-- Insert a new "duplicate" modal (for when a wallet is re-submitted) -->
+    <div id="duplicateModal" class="referral-modal" style="display: none;">
+        <div class="referral-modal-content">
+            <h2>Duplicate Wallet</h2>
+            <p id="duplicateMessage">This wallet has already been submitted. (Referrals: 0)</p>
+            <button onclick="closeDuplicateModal()">Close</button>
         </div>
     </div>
 
     <script>
+        // Function to validate a Solana wallet address (a 32–44 character base58 string starting with a digit or a letter (not 0, O, I, or l) and ending with a letter or digit)
+        function isValidSolanaWallet(address) {
+            // Solana addresses are 32–44 characters long and are base58 encoded (i.e. use digits and letters except 0, O, I, l)
+            const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+            return base58Regex.test(address);
+        }
+
         // Function to show messages
         function showMessage(message, isError = false) {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = message;
-            messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+            messageDiv.className = 'feedback-message ' + (isError ? 'error' : 'success');
             setTimeout(() => {
                 messageDiv.textContent = '';
-                messageDiv.className = 'message';
+                messageDiv.className = 'feedback-message';
             }, 5000);
         }
 
@@ -167,31 +141,73 @@
             }
         }
 
-        // Handle form submission
-        document.getElementById('walletForm').addEventListener('submit', async (e) => {
+        // Referral modal functions
+        function openReferralModal(wallet) {
+            const modal = document.getElementById('referralModal');
+            const refInput = document.getElementById('referralLink');
+            refInput.value = "https://onlyfrens.com/ref?wallet=" + wallet;
+            modal.style.display = "flex";
+        }
+
+        function closeReferralModal() {
+            const modal = document.getElementById('referralModal');
+            modal.style.display = "none";
+        }
+
+        function copyReferralLink() {
+            const refInput = document.getElementById('referralLink');
+            refInput.select();
+            document.execCommand("copy");
+            alert("Referral link copied to clipboard!");
+        }
+
+        // New helper functions for the duplicate modal
+        function openDuplicateModal(wallet, referralCount) {
+            const modal = document.getElementById("duplicateModal");
+            const msg = document.getElementById("duplicateMessage");
+            msg.textContent = "This wallet has already been submitted. (Referrals: " + referralCount + ")";
+            modal.style.display = "flex";
+        }
+
+        function closeDuplicateModal() {
+            const modal = document.getElementById("duplicateModal");
+            modal.style.display = "none";
+        }
+
+        // Update the wallet submission handler (so that if a non-Solana address is entered, it shows an error message "Please enter a valid Solana address.")
+        document.getElementById("walletForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const walletAddress = document.getElementById('walletAddress').value;
+            const walletAddress = document.getElementById("walletAddress").value.trim();
+            if (!isValidSolanaWallet(walletAddress)) {
+                showMessage("Please enter a valid Solana address.", true);
+                return;
+            }
 
             try {
-                const response = await fetch('/api/wallets', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                const response = await fetch("/api/wallets", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ walletAddress })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage('Wallet added successfully');
-                    document.getElementById('walletForm').reset();
+                    showMessage("Wallet added successfully");
+                    document.getElementById("walletForm").reset();
+                    openReferralModal(walletAddress);
                     loadWallets();
+                } else if (response.status === 400 && data.error === "Wallet already exists") {
+                    // If the wallet is a duplicate, fetch referrals and count referrals for this wallet (as referrer)
+                    const referralsResponse = await fetch("/api/referrals");
+                    const referrals = await referralsResponse.json();
+                    const referralCount = referrals.filter(r => r.referrer === walletAddress).length;
+                    openDuplicateModal(walletAddress, referralCount);
                 } else {
-                    showMessage(data.error || 'Error adding wallet', true);
+                    showMessage(data.error || "Error adding wallet", true);
                 }
             } catch (error) {
-                showMessage('Error adding wallet', true);
+                showMessage("Error adding wallet", true);
             }
         });
 
