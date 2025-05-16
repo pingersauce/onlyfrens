@@ -1,10 +1,11 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="OnlyFrens - Believe in our Creators">
     <meta name="theme-color" content="#1a1a2e">
-    <title>OnlyFrens</title>
+    <title>Wallet Collector</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/jpeg" href="believe-logo.jpg">
     <script type="importmap">
@@ -16,39 +17,186 @@
     </script>
     <!-- Optional: Link to a techy font if desired -->
     <!-- <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"> -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        #walletList {
+            margin-top: 20px;
+        }
+        .wallet-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to OnlyFrens</h1>
-        <p>Believe in our Creators.</p>
-
-        <div class="input-group">
-            <label for="walletAddress">Solana Wallet Address</label>
-            <div class="input-button-row">
-                <input type="text" id="walletAddress" name="walletAddress" placeholder="Enter your wallet address">
-                <button id="submitWallet">Submit</button>
+        <h1>Wallet Collector</h1>
+        
+        <form id="walletForm">
+            <div class="form-group">
+                <label for="walletAddress">Wallet Address:</label>
+                <input type="text" id="walletAddress" name="walletAddress" required 
+                       placeholder="Enter your wallet address">
             </div>
+            <button type="submit">Submit Wallet</button>
+        </form>
+
+        <div id="message"></div>
+        
+        <div id="walletList">
+            <h2>Submitted Wallets</h2>
+            <div id="wallets"></div>
         </div>
-
-        <p class="eligibility-info">If your wallet is holding frens at the time of snapshot, you will be recieving the airdrop.</p>
-
-        <div class="image-gallery">
-            <img src="anime-comparison-1.png" alt="Anime Real Frens Comparison">
-            <img src="anime-comparison-2.png" alt="Anime Real OnlyFrens T-shirt Comparison 1">
-            <img src="anime-comparison-3.png" alt="Anime Real OnlyFrens T-shirt Comparison 2">
-            <img src="anime-comparison-4.png" alt="Selfie Anime Comparison">
-        </div>
-
-        <!-- New section for "Powered by Believe" -->
-        <div class="powered-by">
-            <p>Powered by Believe App</p>
-            <a href="https://believe.app/" target="_blank" rel="noopener noreferrer">
-                <img src="believe-logo.jpg" alt="Believe Logo" style="cursor: pointer;">
-            </a>
-        </div>
-
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Function to show messages
+        function showMessage(message, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = 'message';
+            }, 5000);
+        }
+
+        // Function to load wallets
+        async function loadWallets() {
+            try {
+                const response = await fetch('/api/wallets');
+                const wallets = await response.json();
+                const walletsDiv = document.getElementById('wallets');
+                walletsDiv.innerHTML = wallets.map(wallet => `
+                    <div class="wallet-item">
+                        <span>${wallet.address}</span>
+                        <button class="delete-btn" onclick="deleteWallet('${wallet.id}')">Delete</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showMessage('Error loading wallets', true);
+            }
+        }
+
+        // Function to delete wallet
+        async function deleteWallet(id) {
+            try {
+                const response = await fetch(`/api/wallets/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    showMessage('Wallet deleted successfully');
+                    loadWallets();
+                } else {
+                    showMessage('Error deleting wallet', true);
+                }
+            } catch (error) {
+                showMessage('Error deleting wallet', true);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('walletForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const walletAddress = document.getElementById('walletAddress').value;
+
+            try {
+                const response = await fetch('/api/wallets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ walletAddress })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Wallet added successfully');
+                    document.getElementById('walletForm').reset();
+                    loadWallets();
+                } else {
+                    showMessage(data.error || 'Error adding wallet', true);
+                }
+            } catch (error) {
+                showMessage('Error adding wallet', true);
+            }
+        });
+
+        // Load wallets when page loads
+        loadWallets();
+    </script>
 </body>
 </html>

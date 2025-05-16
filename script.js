@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create feedback element
     const feedbackElement = document.createElement('div');
     feedbackElement.className = 'feedback-message';
-    container.insertBefore(feedbackElement, document.querySelector('.image-gallery'));
+    container.insertBefore(feedbackElement, document.querySelector('.walletList'));
 
     function showFeedback(message, isError = false) {
         feedbackElement.textContent = message;
@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
-    // API endpoint - will be automatically handled by Vercel
-    const API_URL = '/api/submit-wallet';
+    // API endpoint
+    const API_URL = '/api/wallets';
 
     if (submitButton && walletInput) {
         submitButton.addEventListener('click', async () => {
@@ -33,35 +33,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     submitButton.disabled = true;
                     submitButton.textContent = 'Submitting...';
                     
-                    console.log('Submitting wallet:', walletAddress);
-                    
-                    // Get referral code from URL if present
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const referredBy = urlParams.get('ref');
-                    
                     // Make the request
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            walletAddress,
-                            referredBy
-                        })
+                        body: JSON.stringify({ walletAddress })
                     });
                     
-                    console.log('Response status:', response.status);
                     const data = await response.json();
-                    console.log('Response:', data);
                     
-                    if (data.status === 'success') {
-                        const message = data.data.referralCount > 0 
-                            ? `Wallet submitted successfully! Your referral code is ${data.data.referralCode} (${data.data.referralCount} referrals)`
-                            : 'Wallet submitted successfully! Your referral code is ' + data.data.referralCode;
-                        showFeedback(message);
+                    if (response.ok) {
+                        if (data.status === 'processing') {
+                            showFeedback('Wallet submission queued. Processing...');
+                            // Poll for updates
+                            pollWalletStatus(walletAddress);
+                        } else {
+                            showFeedback('Wallet added successfully!');
+                            walletInput.value = ''; // Clear input
+                            loadWallets(); // Refresh the wallet list
+                        }
                     } else {
-                        showFeedback(data.message || 'Submission failed', true);
+                        showFeedback(data.error || 'Failed to add wallet', true);
                     }
                     
                 } catch (error) {
@@ -76,4 +70,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Function to poll wallet status
+    async function pollWalletStatus(walletAddress) {
+        const maxAttempts = 10;
+        let attempts = 0;
+        
+        const poll = async () => {
+            try {
+                const wallets = await loadWallets();
+                const wallet = wallets.find(w => w.address === walletAddress);
+                
+                if (wallet) {
+                    showFeedback('Wallet added successfully!');
+                    walletInput.value = ''; // Clear input
+                    return true;
+                }
+                
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    showFeedback('Wallet submission is taking longer than expected. Please check back later.', true);
+                    return true;
+                }
+                
+                // Poll again after 2 seconds
+                setTimeout(poll, 2000);
+            } catch (error) {
+                console.error('Polling error:', error);
+                showFeedback('Error checking wallet status', true);
+                return true;
+            }
+        };
+        
+        poll();
+    }
+
+    // Function to load wallets
+    async function loadWallets() {
+        try {
+            const response = await fetch(API_URL);
+            const wallets = await response.json();
+            const walletsDiv = document.getElementById('wallets');
+            walletsDiv.innerHTML = wallets.map(wallet => `
+                <div class="wallet-item">
+                    <span>${wallet.address}</span>
+                    <button class="delete-btn" onclick="deleteWallet('${wallet.id}')">Delete</button>
+                </div>
+            `).join('');
+            return wallets;
+        } catch (error) {
+            console.error('Error loading wallets:', error);
+            showFeedback('Error loading wallets', true);
+            return [];
+        }
+    }
+
+    // Function to delete wallet
+    window.deleteWallet = async function(id) {
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                showFeedback('Wallet deleted successfully');
+                loadWallets();
+            } else {
+                showFeedback('Error deleting wallet', true);
+            }
+        } catch (error) {
+            console.error('Error deleting wallet:', error);
+            showFeedback('Error deleting wallet', true);
+        }
+    };
+
+    // Load wallets when page loads
+    loadWallets();
 });

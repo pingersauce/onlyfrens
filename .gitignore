@@ -6,6 +6,8 @@ package-lock.json
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
 
 # Logs
 logs
@@ -26,4 +28,18 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo
+
+# Vercel
+.vercel
+
+# Build files
+dist/
+build/
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp 
