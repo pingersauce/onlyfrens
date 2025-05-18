@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Show the referral popup with the referral code and position
                     showReferralPopup(data.data.referralCode, data.data.positionInLine);
                 } else if (response.status === 400 && data.error === "Wallet already exists") {
-                    // If the wallet is a duplicate, just show the duplicate modal
+                    // If the wallet is a duplicate, show the duplicate modal
                     openDuplicateModal(walletAddress);
                 } else {
                     showFeedback(data.message || 'Submission failed', true);
