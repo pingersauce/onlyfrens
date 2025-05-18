@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (response.ok) {
                     showFeedback('Wallet submitted successfully!');
+                    document.getElementById('walletForm').reset();
                     // Show the referral popup with the referral code and position
                     showReferralPopup(data.data.referralCode, data.data.positionInLine);
                 } else if (response.status === 400 && data.error === "Wallet already exists") {
@@ -320,6 +321,20 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.style.display = 'none';
     }
 
+    // Function to open duplicate modal
+    function openDuplicateModal(wallet, referralCount) {
+        const modal = document.getElementById("duplicateModal");
+        const msg = document.getElementById("duplicateMessage");
+        msg.textContent = "This wallet has already been submitted. (Referrals: " + referralCount + ")";
+        modal.style.display = "flex";
+    }
+
+    // Function to close duplicate modal
+    function closeDuplicateModal() {
+        const modal = document.getElementById("duplicateModal");
+        modal.style.display = "none";
+    }
+
     // Add event listeners for popup
     document.getElementById('close-popup').addEventListener('click', hideReferralPopup);
     document.getElementById('copy-link').addEventListener('click', () => {
@@ -335,6 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 2000);
         });
     });
+
+    // Add event listener for duplicate modal close button
+    document.querySelector('#duplicateModal button').addEventListener('click', closeDuplicateModal);
 
     // Check for referral code in URL on page load
     const urlParams = new URLSearchParams(window.location.search);
