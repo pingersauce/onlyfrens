@@ -209,7 +209,7 @@
                 if (response.ok) {
                     showMessage("Wallet added successfully");
                     document.getElementById("walletForm").reset();
-                    openReferralModal(walletAddress);
+                    showReferralPopup(data.data.referralCode, data.data.positionInLine);
                     loadWallets();
                 } else if (response.status === 400 && data.error === "Wallet already exists") {
                     // If the wallet is a duplicate, fetch referrals and count referrals for this wallet (as referrer)
