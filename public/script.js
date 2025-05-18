@@ -270,8 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to show popup
     function showReferralPopup(referralCode, positionInLine) {
-        const baseUrl = window.location.origin;
-        const referralLink = `${baseUrl}?ref=${referralCode}`;
+        const referralLink = `https://onlyfrens.pro/ref?wallet=${referralCode}`;
         
         document.getElementById('referral-code').textContent = referralCode;
         document.getElementById('referral-link').textContent = referralLink;

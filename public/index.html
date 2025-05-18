@@ -86,7 +86,7 @@
         <div class="referral-modal-content">
             <h2>Referral Link</h2>
             <p>Your Airdrop will be increased 10% for each user you refer</p>
-            <input type="text" id="referralLink" readonly value="https://onlyfrens.com/ref?wallet=YOUR_WALLET" />
+            <input type="text" id="referralLink" readonly value="https://onlyfrens.pro/ref?wallet=YOUR_WALLET" />
             <button onclick="copyReferralLink()">Copy Link</button>
             <button onclick="closeReferralModal()">Close</button>
             <p class="motto">We goon together, we moon together!</p>
@@ -159,7 +159,7 @@
         function openReferralModal(wallet) {
             const modal = document.getElementById('referralModal');
             const refInput = document.getElementById('referralLink');
-            refInput.value = "https://onlyfrens.com/ref?wallet=" + wallet;
+            refInput.value = "https://onlyfrens.pro/ref?wallet=" + wallet;
             modal.style.display = "flex";
         }
 
