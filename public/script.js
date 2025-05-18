@@ -166,121 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Create popup element
-    const popup = document.createElement('div');
-    popup.id = 'referral-popup';
-    popup.style.cssText = `
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.95);
-        padding: 2rem;
-        border-radius: 12px;
-        border: 1px solid #333;
-        color: white;
-        z-index: 1000;
-        max-width: 90%;
-        width: 400px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    `;
-
-    // Add popup content
-    popup.innerHTML = `
-        <h2 style="color: #fff; margin-bottom: 1rem;">We goon together, we moon together!</h2>
-        <div style="margin-bottom: 1.5rem;">
-            <p style="color: #ccc; margin-bottom: 0.5rem;">Your referral code:</p>
-            <div style="
-                background: #1a1a1a;
-                padding: 0.75rem;
-                border-radius: 8px;
-                border: 1px solid #333;
-                margin-bottom: 1rem;
-                font-family: monospace;
-                font-size: 1.2rem;
-                color: #fff;
-            " id="referral-code"></div>
-            <p style="color: #ccc; margin-bottom: 0.5rem;">Your referral link:</p>
-            <div style="
-                background: #1a1a1a;
-                padding: 0.75rem;
-                border-radius: 8px;
-                border: 1px solid #333;
-                margin-bottom: 1rem;
-                font-family: monospace;
-                font-size: 0.9rem;
-                color: #fff;
-                word-break: break-all;
-            " id="referral-link"></div>
-            <button id="copy-link" style="
-                background: #4CAF50;
-                color: white;
-                border: none;
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                cursor: pointer;
-                margin-top: 0.5rem;
-                font-size: 0.9rem;
-            ">Copy Link</button>
-        </div>
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #fff; margin-bottom: 0.5rem;">🎁 Tiered Airdrop Rewards</h3>
-            <div style="
-                background: #1a1a1a;
-                padding: 1rem;
-                border-radius: 8px;
-                border: 1px solid #333;
-                margin-bottom: 1rem;
-                text-align: left;
-            ">
-                <p style="color: #00ffff; margin-bottom: 0.5rem; font-weight: bold;">Early Bird Tiers:</p>
-                <ul style="color: #ccc; font-size: 0.9rem; margin: 0; padding-left: 1.2rem;">
-                    <li style="margin-bottom: 0.3rem;">First 100 wallets: <span style="color: #4CAF50;">2x Base Reward</span></li>
-                    <li style="margin-bottom: 0.3rem;">Wallets 101-500: <span style="color: #4CAF50;">1.5x Base Reward</span></li>
-                    <li style="margin-bottom: 0.3rem;">Wallets 501-1000: <span style="color: #4CAF50;">1.25x Base Reward</span></li>
-                    <li>Wallets 1001+: <span style="color: #4CAF50;">1x Base Reward</span></li>
-                </ul>
-            </div>
-            <p style="color: #ccc; font-size: 0.9rem;">
-                • Get 10% bonus for each friend you refer<br>
-                • Share your link to start earning!
-            </p>
-        </div>
-        <button id="close-popup" style="
-            background: #333;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-        ">Close</button>
-    `;
-    document.body.appendChild(popup);
-
-    // Add overlay
-    const overlay = document.createElement('div');
-    overlay.id = 'popup-overlay';
-    overlay.style.cssText = `
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 999;
-    `;
-    document.body.appendChild(overlay);
-
     // Function to show popup
     function showReferralPopup(referralCode, positionInLine) {
-        const referralLink = `https://onlyfrens.pro?ref=${referralCode}`;
+        // Get the modal elements
+        const modal = document.getElementById('referralModal');
+        const codeElement = document.getElementById('referral-code');
+        const linkElement = document.getElementById('referral-link');
         
-        document.getElementById('referral-code').textContent = referralCode;
-        document.getElementById('referral-link').textContent = referralLink;
+        // Set the referral code and link
+        codeElement.textContent = referralCode;
+        linkElement.textContent = `https://onlyfrens.pro?ref=${referralCode}`;
         
         // Add position in line to the popup with tier information
         const positionElement = document.createElement('div');
@@ -308,17 +203,17 @@ document.addEventListener('DOMContentLoaded', () => {
         positionElement.innerHTML = `You are #${positionInLine} in line!<br><span style="font-size: 0.9rem; color: #4CAF50;">(${tierMultiplier} Base Reward)</span>`;
         
         // Insert position element after the referral link
-        const referralLinkDiv = document.getElementById('referral-link').parentElement;
+        const referralLinkDiv = linkElement.parentElement;
         referralLinkDiv.parentElement.insertBefore(positionElement, referralLinkDiv.nextSibling);
         
-        popup.style.display = 'block';
-        overlay.style.display = 'block';
+        // Show the modal
+        modal.style.display = 'flex';
     }
 
     // Function to hide popup
     function hideReferralPopup() {
-        popup.style.display = 'none';
-        overlay.style.display = 'none';
+        const modal = document.getElementById('referralModal');
+        modal.style.display = 'none';
     }
 
     // Function to open duplicate modal
