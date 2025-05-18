@@ -126,23 +126,25 @@ app.post('/api/wallets', async (req, res) => {
         // Calculate position in line (1-based index)
         const positionInLine = wallets.length;
 
+        // Get referrals for this wallet
+        const referrals = await redis.get("referrals") || [];
+        const referralCount = referrals.filter(r => r.referrer === walletAddress).length;
+        const bonusPercentage = Math.min(referralCount * 10, 100);
+
         // Return success response with the same format as local version
-        res.status(201).json({
+        res.status(200).json({
             status: 'success',
             message: 'Wallet submitted successfully',
             data: {
                 referralCode,
                 positionInLine,
-                bonusPercentage: 0,
-                referralCount: 0
+                bonusPercentage,
+                referralCount
             }
         });
     } catch (error) {
         console.error('POST /api/wallets - Error:', error);
-        res.status(500).json({ 
-            error: 'Failed to add wallet',
-            details: error.message 
-        });
+        res.status(500).json({ error: 'Failed to process submission', details: error.message });
     }
 });
 

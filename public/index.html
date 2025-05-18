@@ -250,43 +250,6 @@
             modal.style.display = "none";
         }
 
-        // Update the wallet submission handler (so that if a non-Solana address is entered, it shows an error message "Please enter a valid Solana address.")
-        document.getElementById("walletForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const walletAddress = document.getElementById("walletAddress").value.trim();
-            if (!isValidSolanaWallet(walletAddress)) {
-                showMessage("Please enter a valid Solana address.", true);
-                return;
-            }
-
-            try {
-                const response = await fetch("/api/wallets", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ walletAddress })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showMessage("Wallet added successfully");
-                    document.getElementById("walletForm").reset();
-                    showReferralPopup(data.data.referralCode, data.data.positionInLine);
-                    loadWallets();
-                } else if (response.status === 400 && data.error === "Wallet already exists") {
-                    // If the wallet is a duplicate, fetch referrals and count referrals for this wallet (as referrer)
-                    const referralsResponse = await fetch("/api/referrals");
-                    const referrals = await referralsResponse.json();
-                    const referralCount = referrals.filter(r => r.referrer === walletAddress).length;
-                    openDuplicateModal(walletAddress, referralCount);
-                } else {
-                    showMessage(data.error || "Error adding wallet", true);
-                }
-            } catch (error) {
-                showMessage("Error adding wallet", true);
-            }
-        });
-
         // Load wallets when page loads
         loadWallets();
     </script>
