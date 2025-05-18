@@ -89,7 +89,7 @@ app.get('/api/wallets', async (req, res) => {
 // Add a new wallet
 app.post('/api/wallets', async (req, res) => {
     try {
-        const { walletAddress } = req.body;
+        const { walletAddress, referredBy } = req.body;
         console.log('POST /api/wallets - Received wallet:', walletAddress);
         
         if (!walletAddress) {
@@ -106,11 +106,16 @@ app.post('/api/wallets', async (req, res) => {
             return res.status(400).json({ error: 'Wallet already exists' });
         }
 
+        // Generate referral code from wallet address
+        const referralCode = walletAddress.substring(0, 6).toUpperCase();
+        
         // Add new wallet
         const newWallet = {
             id: Date.now().toString(),
             address: walletAddress,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            referralCode: referralCode,
+            referredBy: referredBy || ''
         };
         console.log('POST /api/wallets - Adding new wallet:', newWallet);
 
@@ -118,7 +123,20 @@ app.post('/api/wallets', async (req, res) => {
         await writeWallets(wallets);
         console.log('POST /api/wallets - Successfully added wallet');
 
-        res.status(201).json(newWallet);
+        // Calculate position in line (1-based index)
+        const positionInLine = wallets.length;
+
+        // Return success response with the same format as local version
+        res.status(201).json({
+            status: 'success',
+            message: 'Wallet submitted successfully',
+            data: {
+                referralCode,
+                positionInLine,
+                bonusPercentage: 0,
+                referralCount: 0
+            }
+        });
     } catch (error) {
         console.error('POST /api/wallets - Error:', error);
         res.status(500).json({ 
@@ -178,16 +196,19 @@ app.post('/api/referrals', async (req, res) => {
     }
 });
 
-// Add a GET endpoint to retrieve all referrals
+// Get all referrals
 app.get('/api/referrals', async (req, res) => {
     try {
-        console.log("GET /api/referrals – Fetching all referrals");
-        const referrals = await redis.get("referrals") || [];
-        console.log("GET /api/referrals – Success:", referrals);
+        console.log('GET /api/referrals - Fetching all referrals');
+        const referrals = await redis.get('referrals') || [];
+        console.log('GET /api/referrals - Success:', referrals);
         res.json(referrals);
     } catch (error) {
-        console.error("GET /api/referrals – Error:", error);
-        res.status(500).json({ error: "Failed to read referrals", details: error.message });
+        console.error('GET /api/referrals - Error:', error);
+        res.status(500).json({ 
+            error: 'Failed to read referrals',
+            details: error.message 
+        });
     }
 });
 
