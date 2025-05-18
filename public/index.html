@@ -159,7 +159,7 @@
     <div id="duplicateModal" class="referral-modal" style="display: none;">
         <div class="referral-modal-content">
             <h2>Duplicate Wallet</h2>
-            <p id="duplicateMessage">This wallet has already been submitted. (Referrals: 0)</p>
+            <p id="duplicateMessage">This wallet is already entered!<br>Make sure this wallet is holding frens at the time of the airdrop</p>
             <button onclick="closeDuplicateModal()">Close</button>
         </div>
     </div>
@@ -238,10 +238,8 @@
         }
 
         // New helper functions for the duplicate modal
-        function openDuplicateModal(wallet, referralCount) {
+        function openDuplicateModal(wallet) {
             const modal = document.getElementById("duplicateModal");
-            const msg = document.getElementById("duplicateMessage");
-            msg.textContent = "This wallet has already been submitted. (Referrals: " + referralCount + ")";
             modal.style.display = "flex";
         }
 

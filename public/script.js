@@ -147,11 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Show the referral popup with the referral code and position
                     showReferralPopup(data.data.referralCode, data.data.positionInLine);
                 } else if (response.status === 400 && data.error === "Wallet already exists") {
-                    // If the wallet is a duplicate, fetch referrals and count referrals for this wallet
-                    const referralsResponse = await fetch("/api/referrals");
-                    const referrals = await referralsResponse.json();
-                    const referralCount = referrals.filter(r => r.referrer === walletAddress).length;
-                    openDuplicateModal(walletAddress, referralCount);
+                    // If the wallet is a duplicate, just show the duplicate modal
+                    openDuplicateModal(walletAddress);
                 } else {
                     showFeedback(data.message || 'Submission failed', true);
                 }
@@ -217,10 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Function to open duplicate modal
-    function openDuplicateModal(wallet, referralCount) {
+    function openDuplicateModal(wallet) {
         const modal = document.getElementById("duplicateModal");
-        const msg = document.getElementById("duplicateMessage");
-        msg.textContent = "This wallet has already been submitted. (Referrals: " + referralCount + ")";
         modal.style.display = "flex";
     }
 
