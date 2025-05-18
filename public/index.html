@@ -84,12 +84,74 @@
     <!-- Referral popup modal -->
     <div id="referralModal" class="referral-modal">
         <div class="referral-modal-content">
-            <h2>Referral Link</h2>
-            <p>Your Airdrop will be increased 10% for each user you refer</p>
-            <input type="text" id="referralLink" readonly value="https://onlyfrens.pro?ref=YOUR_WALLET" />
-            <button onclick="copyReferralLink()">Copy Link</button>
-            <button onclick="closeReferralModal()">Close</button>
-            <p class="motto">We goon together, we moon together!</p>
+            <h2>We goon together, we moon together!</h2>
+            <div style="margin-bottom: 1.5rem;">
+                <p style="color: #ccc; margin-bottom: 0.5rem;">Your referral code:</p>
+                <div style="
+                    background: #1a1a1a;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    border: 1px solid #333;
+                    margin-bottom: 1rem;
+                    font-family: monospace;
+                    font-size: 1.2rem;
+                    color: #fff;
+                " id="referral-code"></div>
+                <p style="color: #ccc; margin-bottom: 0.5rem;">Your referral link:</p>
+                <div style="
+                    background: #1a1a1a;
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    border: 1px solid #333;
+                    margin-bottom: 1rem;
+                    font-family: monospace;
+                    font-size: 0.9rem;
+                    color: #fff;
+                    word-break: break-all;
+                " id="referral-link"></div>
+                <button id="copy-link" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-top: 0.5rem;
+                    font-size: 0.9rem;
+                ">Copy Link</button>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: #fff; margin-bottom: 0.5rem;">🎁 Tiered Airdrop Rewards</h3>
+                <div style="
+                    background: #1a1a1a;
+                    padding: 1rem;
+                    border-radius: 8px;
+                    border: 1px solid #333;
+                    margin-bottom: 1rem;
+                    text-align: left;
+                ">
+                    <p style="color: #00ffff; margin-bottom: 0.5rem; font-weight: bold;">Early Bird Tiers:</p>
+                    <ul style="color: #ccc; font-size: 0.9rem; margin: 0; padding-left: 1.2rem;">
+                        <li style="margin-bottom: 0.3rem;">First 100 wallets: <span style="color: #4CAF50;">2x Base Reward</span></li>
+                        <li style="margin-bottom: 0.3rem;">Wallets 101-500: <span style="color: #4CAF50;">1.5x Base Reward</span></li>
+                        <li style="margin-bottom: 0.3rem;">Wallets 501-1000: <span style="color: #4CAF50;">1.25x Base Reward</span></li>
+                        <li>Wallets 1001+: <span style="color: #4CAF50;">1x Base Reward</span></li>
+                    </ul>
+                </div>
+                <p style="color: #ccc; font-size: 0.9rem;">
+                    • Get 10% bonus for each friend you refer<br>
+                    • Share your link to start earning!
+                </p>
+            </div>
+            <button id="close-popup" style="
+                background: #333;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+            ">Close</button>
         </div>
     </div>
 

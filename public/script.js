@@ -141,10 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 console.log('Response:', data);
                 
-                if (data.status === 'success') {
+                if (response.ok) {
                     showFeedback('Wallet submitted successfully!');
                     // Show the referral popup with the referral code and position
                     showReferralPopup(data.data.referralCode, data.data.positionInLine);
+                } else if (response.status === 400 && data.error === "Wallet already exists") {
+                    // If the wallet is a duplicate, fetch referrals and count referrals for this wallet
+                    const referralsResponse = await fetch("/api/referrals");
+                    const referrals = await referralsResponse.json();
+                    const referralCount = referrals.filter(r => r.referrer === walletAddress).length;
+                    openDuplicateModal(walletAddress, referralCount);
                 } else {
                     showFeedback(data.message || 'Submission failed', true);
                 }
