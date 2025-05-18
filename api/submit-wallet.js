@@ -64,12 +64,14 @@ export default async function handler(req, res) {
     // Check if wallet exists
     let existingRow = -1;
     let referralCode = '';
+    let positionInLine = rows.length; // Position is the total number of rows (including header)
 
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] === walletAddress) {
         existingRow = i;
         referralCode = rows[i][1];
-        log('Found existing wallet', { walletAddress, referralCode });
+        positionInLine = i; // If wallet exists, use its current position
+        log('Found existing wallet', { walletAddress, referralCode, positionInLine });
         break;
       }
     }
@@ -88,7 +90,7 @@ export default async function handler(req, res) {
         },
       });
 
-      log('Added new wallet', { walletAddress, referralCode });
+      log('Added new wallet', { walletAddress, referralCode, positionInLine });
     } else {
       // Update timestamp for existing wallet
       await sheets.spreadsheets.values.update({
@@ -157,6 +159,7 @@ export default async function handler(req, res) {
         referralCode,
         bonusPercentage,
         referralCount,
+        positionInLine,
       },
     });
 

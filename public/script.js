@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (data.status === 'success') {
                     showFeedback('Wallet submitted successfully!');
-                    // Show the referral popup with the referral code
-                    showReferralPopup(data.data.referralCode);
+                    // Show the referral popup with the referral code and position
+                    showReferralPopup(data.data.referralCode, data.data.positionInLine);
                 } else {
                     showFeedback(data.message || 'Submission failed', true);
                 }
@@ -219,7 +219,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ">Copy Link</button>
         </div>
         <div style="margin-bottom: 1.5rem;">
-            <h3 style="color: #fff; margin-bottom: 0.5rem;">🎁 Airdrop Rewards</h3>
+            <h3 style="color: #fff; margin-bottom: 0.5rem;">🎁 Tiered Airdrop Rewards</h3>
+            <div style="
+                background: #1a1a1a;
+                padding: 1rem;
+                border-radius: 8px;
+                border: 1px solid #333;
+                margin-bottom: 1rem;
+                text-align: left;
+            ">
+                <p style="color: #00ffff; margin-bottom: 0.5rem; font-weight: bold;">Early Bird Tiers:</p>
+                <ul style="color: #ccc; font-size: 0.9rem; margin: 0; padding-left: 1.2rem;">
+                    <li style="margin-bottom: 0.3rem;">First 100 wallets: <span style="color: #4CAF50;">2x Base Reward</span></li>
+                    <li style="margin-bottom: 0.3rem;">Wallets 101-500: <span style="color: #4CAF50;">1.5x Base Reward</span></li>
+                    <li style="margin-bottom: 0.3rem;">Wallets 501-1000: <span style="color: #4CAF50;">1.25x Base Reward</span></li>
+                    <li>Wallets 1001+: <span style="color: #4CAF50;">1x Base Reward</span></li>
+                </ul>
+            </div>
             <p style="color: #ccc; font-size: 0.9rem;">
                 • Get 10% bonus for each friend you refer<br>
                 • Share your link to start earning!
@@ -253,12 +269,41 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(overlay);
 
     // Function to show popup
-    function showReferralPopup(referralCode) {
+    function showReferralPopup(referralCode, positionInLine) {
         const baseUrl = window.location.origin;
         const referralLink = `${baseUrl}?ref=${referralCode}`;
         
         document.getElementById('referral-code').textContent = referralCode;
         document.getElementById('referral-link').textContent = referralLink;
+        
+        // Add position in line to the popup with tier information
+        const positionElement = document.createElement('div');
+        positionElement.style.cssText = `
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+            color: #00ffff;
+            font-size: 1.2rem;
+            font-weight: bold;
+        `;
+        
+        // Determine tier based on position
+        let tierMultiplier = "1x";
+        if (positionInLine <= 100) {
+            tierMultiplier = "2x";
+        } else if (positionInLine <= 500) {
+            tierMultiplier = "1.5x";
+        } else if (positionInLine <= 1000) {
+            tierMultiplier = "1.25x";
+        }
+        
+        positionElement.innerHTML = `You are #${positionInLine} in line!<br><span style="font-size: 0.9rem; color: #4CAF50;">(${tierMultiplier} Base Reward)</span>`;
+        
+        // Insert position element after the referral link
+        const referralLinkDiv = document.getElementById('referral-link').parentElement;
+        referralLinkDiv.parentElement.insertBefore(positionElement, referralLinkDiv.nextSibling);
         
         popup.style.display = 'block';
         overlay.style.display = 'block';

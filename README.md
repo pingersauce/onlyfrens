@@ -1,43 +1,39 @@
-# Wallet Collector
+# OnlyFrens Wallet Connect
 
-A simple web application for collecting and managing wallet addresses, built with Node.js and deployed on Vercel.
+A web application for managing Solana wallet connections and referrals for the OnlyFrens project. Users can submit their wallet addresses, receive referral links, and participate in a tiered airdrop system.
 
 ## Features
 
-- Submit wallet addresses
-- View all submitted wallets
-- Delete wallets
-- Persistent storage using Vercel KV
-- Reliable submissions using QStash
-- Real-time feedback
-- Mobile-responsive design
+- Solana wallet address validation
+- Referral system with unique referral codes
+- Tiered airdrop rewards based on submission order
+- Real-time position tracking
+- Google Sheets integration for data storage
+- Modern, responsive UI
 
-## Prerequisites
+## Airdrop Tiers
 
-- Node.js 18.x or higher
-- npm or yarn
-- Vercel account
-- Upstash Redis account
-- QStash account
+The airdrop rewards are tiered based on submission order:
+- First 100 wallets: 2x Base Reward
+- Wallets 101-500: 1.5x Base Reward
+- Wallets 501-1000: 1.25x Base Reward
+- Wallets 1001+: 1x Base Reward
 
-## Environment Variables
+Additional 10% bonus for each successful referral.
 
-Create a `.env` file in the root directory with the following variables:
+## Tech Stack
 
-```env
-KV_REST_API_TOKEN=your_kv_token
-KV_REST_API_URL=your_redis_url
-QSTASH_TOKEN=your_qstash_token
-PORT=3001
-NODE_ENV=development
-```
+- Frontend: HTML, CSS, JavaScript
+- Backend: Node.js, Vercel Serverless Functions
+- Database: Google Sheets API
+- Deployment: Vercel
 
-## Local Development
+## Setup
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
-cd <your-repo-name>
+git clone https://github.com/yourusername/onlyfrens-wallet-connect.git
+cd onlyfrens-wallet-connect
 ```
 
 2. Install dependencies:
@@ -45,29 +41,30 @@ cd <your-repo-name>
 npm install
 ```
 
-3. Start the development server:
+3. Set up environment variables:
+Create a `.env` file with the following variables:
+```
+GOOGLE_CLIENT_EMAIL=your-service-account-email
+GOOGLE_PRIVATE_KEY=your-private-key
+SPREADSHEET_ID=your-google-sheet-id
+```
+
+4. Set up Google Sheets:
+- Create a new Google Sheet
+- Share it with the service account email
+- Copy the Sheet ID from the URL
+
+5. Deploy to Vercel:
+```bash
+vercel
+```
+
+## Development
+
+To run the project locally:
 ```bash
 npm run dev
 ```
-
-4. Visit `http://localhost:3001` in your browser
-
-## Deployment
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add the following environment variables in Vercel:
-   - `KV_REST_API_TOKEN`
-   - `KV_REST_API_URL`
-   - `QSTASH_TOKEN`
-4. Deploy!
-
-## API Endpoints
-
-- `GET /api/wallets` - Get all wallets
-- `POST /api/wallets` - Submit a new wallet
-- `DELETE /api/wallets/:id` - Delete a wallet
-- `GET /health` - Health check endpoint
 
 ## Contributing
 
@@ -79,4 +76,10 @@ npm run dev
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Security
+
+- Never commit sensitive credentials or environment variables
+- Keep your Google Sheets API credentials secure
+- Regularly update dependencies to patch security vulnerabilities 
